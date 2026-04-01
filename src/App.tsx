@@ -60,8 +60,8 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     id: 'title',
     title: '进击的巨人',
     text: '世界卷宗',
-    position: { x: -480, y: -780 },
-    camera: { x: -230, y: -730, zoom: 1 },
+    position: { x: -350, y: -780 },
+    camera: { x: -100, y: -730, zoom: 1 },
     cardIds: [],
     titleClass: 'text-white !text-7xl !tracking-wide',
     textClass: 'text-base text-white/40 font-mono tracking-[0.3em]',
@@ -71,8 +71,8 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     id: 'prologue',
     title: '',
     text: '三重城墙围起了人类最后的领土。\n墙外是巨人——没有理智、没有目的，只会吃人。\n墙内的人类已经忘记了外面的世界。\n\n一百年的和平让大多数人相信，\n城墙就是世界的边界。',
-    position: { x: -480, y: -600 },
-    camera: { x: -230, y: -550, zoom: 1 },
+    position: { x: -350, y: -600 },
+    camera: { x: -100, y: -550, zoom: 1 },
     cardIds: [],
     textClass: 'text-lg text-white/70 font-serif leading-loose',
   },
@@ -83,7 +83,7 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     title: '他们',
     text: '记住这些面孔。\n他们中的每一个人，都将做出不可挽回的选择。',
     position: { x: -580, y: -300 },
-    camera: { x: -380, y: -80, zoom: 0.75 },
+    camera: { x: -380, y: -80, zoom: 0.9 },
     cardIds: ['eren', 'mikasa', 'armin', 'levi', 'reiner', 'zeke'],
     quotes: {
       'eren': '"如果杀光那边的敌人，我们就能自由了吗？"',
@@ -97,7 +97,7 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     title: '舞台',
     text: '这些是他们战斗过的地方。\n每一块石头都浸透了血。',
     position: { x: 380, y: -300 },
-    camera: { x: 520, y: -80, zoom: 0.85 },
+    camera: { x: 520, y: -80, zoom: 1 },
     cardIds: ['shiganshina', 'ocean', 'liberio'],
   },
   // ===== Row 2: 3 clusters =====
@@ -107,7 +107,7 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     title: '转折',
     text: '845年，城墙碎了。\n不只是石头碎了——\n是所有人以为的世界碎了。',
     position: { x: -680, y: 350 },
-    camera: { x: -530, y: 520, zoom: 0.85 },
+    camera: { x: -530, y: 520, zoom: 1 },
     cardIds: ['basement', 'trost', 'rumbling'],
   },
   // --- Act 5: Secrets (center) ---
@@ -116,7 +116,7 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     title: '真相',
     text: '以下内容已被始祖之力封印。\n你正在阅读不应存在的记录。',
     position: { x: -100, y: 350 },
-    camera: { x: 50, y: 520, zoom: 0.9 },
+    camera: { x: 50, y: 520, zoom: 1.05 },
     cardIds: ['ymir_origin', 'ackerman'],
     textClass: 'text-sm text-red-400/60 leading-relaxed',
   },
@@ -126,7 +126,7 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     title: '回响',
     text: '当所有的事实摆在面前，你会发现——\n没有人是反派。\n这才是最恐怖的。',
     position: { x: 500, y: 350 },
-    camera: { x: 620, y: 520, zoom: 0.9 },
+    camera: { x: 620, y: 520, zoom: 1.05 },
     cardIds: ['erwin_speech', 'freedom_cost'],
   },
 ];
@@ -629,12 +629,9 @@ export default function App() {
         if (done()) return;
       }
 
-      // Finale: zoom out to show everything
-      panTo(0, 80, 0.5);
-      await wait(2200);
-      if (done()) return;
-
+      // Finale: immediately go free and zoom out to show everything including title
       setNarrativePhase('free');
+      panTo(-50, -200, 0.45);
     })();
 
     return () => { cancelRef.current = true; };
@@ -660,7 +657,7 @@ export default function App() {
     setVisibleQuotes(allQuotes);
 
     setNarrativePhase('free');
-    panTo(0, 80, 0.5);
+    panTo(-50, -200, 0.45);
   }, [panTo]);
 
   // Connection lines for Paths Mode
