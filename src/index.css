@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-titan-red: #880808;
+  --color-titan-dark: #0a0a0a;
+  --color-titan-paper: #d4d0c8;
+  --color-titan-steel: #2a2a2a;
+}
+
+@layer base {
+  body {
+    @apply bg-titan-dark text-titan-paper font-sans selection:bg-titan-red selection:text-white overflow-hidden;
+  }
+}
+
+/* 桌面质感 */
+.desk-surface {
+  background: 
+    radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.05) 0%, transparent 50%),
+    linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+    url('https://www.transparenttextures.com/patterns/dark-wood.png');
+  background-attachment: fixed;
+}
+
+/* 纸张效果 */
+.paper-sheet {
+  @apply bg-[#e4e3e0] text-black shadow-2xl;
+  background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+}
+
+/* 拍立得效果 */
+.polaroid {
+  @apply bg-white p-3 pb-10 shadow-xl border border-gray-200;
+  background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+}
+
+/* 报纸残片 */
+.newspaper-clip {
+  @apply bg-[#f4f1ea] p-5 shadow-lg border-y border-black/10;
+  background-image: radial-gradient(#000 10%, transparent 10%);
+  background-size: 2px 2px;
+  background-color: #f4f1ea;
+  position: relative;
+}
+.newspaper-clip::before {
+  content: '';
+  @apply absolute inset-0 opacity-5;
+  background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+}
+
+/* 蓝图/地图 */
+.blueprint {
+  @apply bg-[#2a4d69] text-blue-100 p-4 border-2 border-blue-300/30 shadow-2xl;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 手写笔记 */
+.handwritten-note {
+  @apply bg-[#fff9c4] p-6 shadow-md rotate-1;
+  font-family: 'Georgia', serif;
+  background-image: repeating-linear-gradient(transparent, transparent 23px, #e0e0e0 23px, #e0e0e0 24px);
+}
+
+/* 绝密卷宗 */
+.top-secret-folder {
+  @apply bg-[#d4a373] p-6 shadow-2xl border-l-8 border-[#bc8a5f];
+}
+
+/* 路径模式背景 */
+.paths-bg {
+  background: radial-gradient(circle at center, #1a3a5a 0%, #0a0a0a 100%);
+  transition: background 1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.paths-glow {
+  text-shadow: 0 0 10px rgba(100, 200, 255, 0.8);
+}
+
+.blue-filter {
+  filter: sepia(0.5) hue-rotate(180deg) saturate(2);
+}
+
+.glass-panel {
+  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-lg;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-titan-red/30 rounded-full;
+}
+
+/* 打字机光标 */
+.cursor-blink::after {
+  content: '|';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Opening black overlay fade-out */
+@keyframes overlay-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.opening-overlay {
+  animation: overlay-fade-out 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+
+/* Markdown Styles */
+.prose-invert {
+  --tw-prose-body: #d1d5db;
+  --tw-prose-headings: #f3f4f6;
+  --tw-prose-links: #ef4444;
+  --tw-prose-bold: #ffffff;
+  --tw-prose-counters: #9ca3af;
+  --tw-prose-bullets: #4b5563;
+  --tw-prose-hr: #374151;
+  --tw-prose-quotes: #f3f4f6;
+  --tw-prose-quote-borders: #ef4444;
+  --tw-prose-captions: #9ca3af;
+  --tw-prose-code: #ffffff;
+  --tw-prose-pre-code: #d1d5db;
+  --tw-prose-pre-bg: rgba(0, 0, 0, 0.5);
+  --tw-prose-th-borders: #4b5563;
+  --tw-prose-td-borders: #374151;
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
