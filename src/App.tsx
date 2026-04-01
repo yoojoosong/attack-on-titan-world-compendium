@@ -410,6 +410,7 @@ const Minimap = ({
 
 export default function App() {
   // Narrative state
+  const [hasEntered, setHasEntered] = useState(false);
   const [narrativePhase, setNarrativePhase] = useState<'narrating' | 'free'>('narrating');
   const [sectionStates, setSectionStates] = useState<Record<number, 'hidden' | 'title' | 'text' | 'complete'>>({});
   const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
@@ -428,21 +429,12 @@ export default function App() {
     audio.loop = true;
     audio.volume = 0.3;
     audioRef.current = audio;
-
-    // Browsers block autoplay without interaction — try to play,
-    // and if blocked, play on first user click
-    const tryPlay = () => {
-      audio.play().catch(() => {
-        const unlock = () => {
-          audio.play();
-          document.removeEventListener('click', unlock);
-        };
-        document.addEventListener('click', unlock);
-      });
-    };
-    tryPlay();
-
     return () => { audio.pause(); audio.src = ''; };
+  }, []);
+
+  const handleEnter = useCallback(() => {
+    setHasEntered(true);
+    audioRef.current?.play();
   }, []);
 
   // Fade out BGM when narrative completes
@@ -571,7 +563,7 @@ export default function App() {
   // --- Narrative Sequencer ---
 
   useEffect(() => {
-    if (narrativePhase !== 'narrating') return;
+    if (!hasEntered || narrativePhase !== 'narrating') return;
     cancelRef.current = false;
 
     const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
@@ -635,7 +627,7 @@ export default function App() {
     })();
 
     return () => { cancelRef.current = true; };
-  }, [narrativePhase, panTo, waitForTypewriter]);
+  }, [hasEntered, narrativePhase, panTo, waitForTypewriter]);
 
   // Skip narrative
   const skipNarrative = useCallback(() => {
@@ -698,8 +690,31 @@ export default function App() {
   return (
     <div ref={viewportRef} className={`relative w-full h-screen desk-surface overflow-hidden ${isPathsMode ? 'paths-bg' : ''}`}>
 
+      {/* Entry screen — click to begin */}
+      <AnimatePresence>
+        {!hasEntered && (
+          <motion.div
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: EASE_OUT_EXPO }}
+            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-pointer select-none"
+            onClick={handleEnter}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: EASE_OUT_QUART, delay: 0.3 }}
+              className="text-center"
+            >
+              <h1 className="font-serif text-5xl text-white/80 tracking-wide mb-4">进击的巨人</h1>
+              <p className="text-white/20 font-mono text-xs tracking-[0.3em] mb-12">世 界 卷 宗</p>
+              <p className="text-white/15 text-[11px] font-mono tracking-widest animate-pulse">点 击 进 入</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Black overlay — fades out at start (CSS animation avoids framer-motion init issue) */}
-      <div className="fixed inset-0 bg-black z-[90] pointer-events-none opening-overlay" />
+      {hasEntered && <div className="fixed inset-0 bg-black z-[90] pointer-events-none opening-overlay" />}
 
 
       {/* --- Top Bar: Search & Controls (only in free mode) --- */}
