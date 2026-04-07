@@ -19,7 +19,7 @@
 
 /* 桌面质感 */
 .desk-surface {
-  background: 
+  background:
     radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.05) 0%, transparent 50%),
     linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
     url('https://www.transparenttextures.com/patterns/dark-wood.png');
@@ -55,7 +55,7 @@
 /* 蓝图/地图 */
 .blueprint {
   @apply bg-[#2a4d69] text-blue-100 p-4 border-2 border-blue-300/30 shadow-2xl;
-  background-image: 
+  background-image:
     linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -136,6 +136,171 @@
   --tw-prose-pre-bg: rgba(0, 0, 0, 0.5);
   --tw-prose-th-borders: #4b5563;
   --tw-prose-td-borders: #374151;
+}
+
+/* ============================
+   Workspace Markdown Prose
+   ============================ */
+
+.workspace-prose {
+  font-family: "Playfair Display", serif;
+  font-size: 17px;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.70);
+}
+.workspace-prose h1 {
+  @apply text-[28px] font-bold mt-12 mb-4;
+  color: rgba(255,255,255,0.85);
+}
+.workspace-prose h2 {
+  @apply text-[22px] font-bold mt-10 mb-3;
+  color: rgba(255,255,255,0.80);
+}
+.workspace-prose h3 {
+  @apply text-[18px] font-semibold mt-8 mb-2;
+  color: rgba(255,255,255,0.75);
+}
+.workspace-prose p {
+  @apply mb-6;
+}
+.workspace-prose strong {
+  color: rgba(255,255,255,0.90);
+  font-weight: 600;
+}
+.workspace-prose em {
+  font-style: italic;
+  color: rgba(255,255,255,0.60);
+}
+.workspace-prose a {
+  color: #880808;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.workspace-prose blockquote {
+  @apply pl-5 italic my-6;
+  border-left: 2px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.45);
+}
+.workspace-prose code {
+  @apply px-1.5 py-0.5 rounded text-[14px] font-mono;
+  background: rgba(255,255,255,0.06);
+}
+.workspace-prose pre {
+  @apply rounded-lg p-4 my-6 overflow-x-auto;
+  background: rgba(255,255,255,0.04);
+}
+.workspace-prose ul, .workspace-prose ol {
+  @apply pl-5 mb-6;
+}
+.workspace-prose li {
+  @apply mb-1;
+}
+.workspace-prose li::marker {
+  color: rgba(255,255,255,0.25);
+}
+.workspace-prose hr {
+  @apply my-10;
+  border-color: rgba(255,255,255,0.06);
+}
+.workspace-prose img {
+  @apply rounded-lg my-6 max-w-full;
+}
+
+/* Story type: larger text */
+.workspace-prose-story {
+  font-size: 18px;
+  line-height: 2;
+}
+
+/* Perspective type: first paragraph italic */
+.workspace-prose-perspective > p:first-of-type {
+  font-size: 20px;
+  font-style: italic;
+  line-height: 1.9;
+  color: rgba(255,255,255,0.50);
+}
+
+/* ============================
+   Workspace Scrollbar
+   ============================ */
+
+.workspace-scroll::-webkit-scrollbar { width: 6px; }
+.workspace-scroll::-webkit-scrollbar-track { background: transparent; }
+.workspace-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border-radius: 999px;
+}
+.workspace-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.20);
+}
+
+/* ============================
+   Sidebar Scrollbar
+   ============================ */
+
+.sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+
+/* ============================
+   Floating Panels — Nav & Agent
+   ============================ */
+
+.nav-panel {
+  background: linear-gradient(
+    160deg,
+    rgba(18, 18, 22, 0.92) 0%,
+    rgba(12, 12, 16, 0.88) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04),
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 12px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.agent-panel {
+  background: linear-gradient(
+    170deg,
+    #1c1c21 0%,
+    #19191e 60%,
+    #1a1820 100%
+  );
+  backdrop-filter: blur(32px) saturate(1.5);
+  -webkit-backdrop-filter: blur(32px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Subtle top-edge highlight on agent panel */
+.agent-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08) 30%,
+    rgba(255, 255, 255, 0.08) 70%,
+    transparent
+  );
+  border-radius: 1px;
+  pointer-events: none;
 }
 
 /* Reduced motion: respect user preference */

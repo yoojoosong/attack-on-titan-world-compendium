@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
 import {
   Skull,
   Map as MapIcon,
@@ -19,28 +19,88 @@ import {
   Move,
   ZoomIn,
   ZoomOut,
-  Navigation,
-  Info,
-  Users,
-  History,
-  MessageSquare,
   Navigation2,
   SkipForward,
   Volume2,
-  VolumeX
+  VolumeX,
+  ChevronLeft,
+  Plus,
+  Send,
+  Compass,
+  MapPin,
+  Flame,
+  BookOpen,
+  PenLine,
+  Image as ImageIcon,
+  Video,
+  Gamepad2,
+  Upload,
+  User,
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import {
   ARCHIVE_DATA,
   ArchiveItem,
-  ArchiveType
+  ArchiveType,
+  AssetType,
 } from './data';
 
-// --- Easing constants (no bounce/elastic) ---
+// --- Easing constants ---
 const EASE_OUT_QUART: [number, number, number, number] = [0.25, 1, 0.5, 1];
 const EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-// --- Narrative Data ---
+// --- Type Colors ---
+const TYPE_COLORS: Record<string, string> = {
+  character: '#60a5fa',
+  location: '#34d399',
+  event: '#fbbf24',
+  secret: '#f87171',
+  perspective: '#a78bfa',
+  story: '#fb923c',
+  image: '#60a5fa',
+  video: '#f472b6',
+  game: '#34d399',
+  audio: '#fbbf24',
+  file: '#9ca3af',
+};
+
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  character: <User size={14} />,
+  location: <MapPin size={14} />,
+  event: <Flame size={14} />,
+  secret: <Lock size={14} />,
+  perspective: <PenLine size={14} />,
+  story: <BookOpen size={14} />,
+  image: <ImageIcon size={14} />,
+  video: <Video size={14} />,
+  game: <Gamepad2 size={14} />,
+};
+
+const COVER_GRADIENTS: Record<string, string> = {
+  character: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+  location: 'linear-gradient(135deg, #0f2027 0%, #203a43 100%)',
+  event: 'linear-gradient(135deg, #1a1a0e 0%, #2d2a1e 100%)',
+  secret: 'linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 100%)',
+  perspective: 'linear-gradient(135deg, #1a1025 0%, #261535 100%)',
+  story: 'linear-gradient(135deg, #1a1510 0%, #2d2518 100%)',
+};
+
+// --- Section → Type mapping ---
+const SECTION_TYPE_MAP: Record<string, string> = {
+  characters: 'character',
+  locations: 'location',
+  events: 'event',
+  secrets: 'secret',
+  perspectives: 'perspective',
+};
+
+// --- View State ---
+type ViewState =
+  | { kind: 'overview' }
+  | { kind: 'section'; sectionId: string }
+  | { kind: 'workspace'; itemId: string };
+
+// --- Narrative Data (unchanged) ---
 
 interface NarrativeSection {
   id: string;
@@ -128,61 +188,39 @@ const QUOTES: Record<string, string> = {
   'will': '"It\'s like home... but it\'s so dark."',
 };
 
-// --- Components ---
+// ===========================================================================
+// Canvas Components (UNCHANGED from original)
+// ===========================================================================
 
 function SectionHeader({
-  section,
-  state,
-  isInstant,
-  isDimmed,
-  displayTitle,
-  onTypewriterDone
+  section, state, isInstant, isDimmed, displayTitle, onTypewriterDone, onSectionClick
 }: {
   section: NarrativeSection;
   state: 'hidden' | 'title' | 'text' | 'complete';
-  isInstant: boolean;
-  isDimmed: boolean;
-  displayTitle?: string;
+  isInstant: boolean; isDimmed: boolean; displayTitle?: string;
   onTypewriterDone?: () => void;
+  onSectionClick?: () => void;
 }) {
   if (state === 'hidden') return null;
-
   const titleText = displayTitle || section.title;
   const showTitle = !!titleText;
   const showText = state === 'text' || state === 'complete';
-
+  const isClickable = isInstant && !!onSectionClick && section.cardIds.length > 0;
   return (
-    <div
-      className="absolute pointer-events-none z-10 w-[500px] transition-opacity duration-700"
-      style={{
-        transform: `translate(${section.position.x}px, ${section.position.y}px)`,
-        opacity: isDimmed ? 0.2 : 1,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: EASE_OUT_QUART }}
-      >
+    <div className={`absolute z-10 w-[500px] transition-opacity duration-700 ${isClickable ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      style={{ transform: `translate(${section.position.x}px, ${section.position.y}px)`, opacity: isDimmed ? 0 : 1 }}>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: EASE_OUT_QUART }}>
         {showTitle && (
-          <h2 className={`font-serif text-5xl font-bold mb-5 tracking-tight ${section.titleClass || 'text-white/80'}`}>
-            {isInstant
-              ? titleText
-              : <Typewriter text={titleText} speed={100} onComplete={state === 'title' ? onTypewriterDone : undefined} />
-            }
+          <h2 onClick={isClickable ? onSectionClick : undefined}
+            className={`font-serif text-5xl font-bold mb-5 tracking-tight ${section.titleClass || 'text-white/80'} ${isClickable ? 'cursor-pointer hover:text-white transition-colors duration-200' : ''}`}>
+            {isInstant ? titleText : <Typewriter text={titleText} speed={100} onComplete={state === 'title' ? onTypewriterDone : undefined} />}
           </h2>
         )}
         {showText && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: EASE_OUT_QUART }}
-            className={`whitespace-pre-line max-w-md ${section.textClass || 'text-sm text-white/40 leading-relaxed'}`}
-          >
-            {isInstant
-              ? section.text
-              : <Typewriter text={section.text} speed={38} onComplete={state === 'text' ? onTypewriterDone : undefined} />
-            }
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: EASE_OUT_QUART }}
+            className={`whitespace-pre-line max-w-md ${section.textClass || 'text-sm text-white/40 leading-relaxed'}`}>
+            {isInstant ? section.text : <Typewriter text={section.text} speed={38} onComplete={state === 'text' ? onTypewriterDone : undefined} />}
           </motion.p>
         )}
       </motion.div>
@@ -190,32 +228,14 @@ function SectionHeader({
   );
 }
 
-function CharacterQuote({
-  cardId,
-  text,
-  position,
-  isInstant,
-  isDimmed
-}: {
-  cardId: string;
-  text: string;
-  position: { x: number; y: number };
-  isInstant: boolean;
-  isDimmed: boolean;
+function CharacterQuote({ cardId, text, position, isInstant, isDimmed }: {
+  cardId: string; text: string; position: { x: number; y: number }; isInstant: boolean; isDimmed: boolean;
 }) {
   return (
-    <div
-      className="absolute pointer-events-none z-10 w-[176px] transition-opacity duration-700"
-      style={{
-        transform: `translate(${position.x}px, ${position.y + 210}px)`,
-        opacity: isDimmed ? 0.15 : 1,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE_OUT_QUART }}
-      >
+    <div className="absolute pointer-events-none z-10 w-[176px] transition-opacity duration-700"
+      style={{ transform: `translate(${position.x}px, ${position.y + 210}px)`, opacity: isDimmed ? 0.15 : 1 }}>
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: EASE_OUT_QUART }}>
         <p className="text-[11px] italic text-white/30 font-serif leading-relaxed">
           {isInstant ? text : <Typewriter text={text} speed={45} />}
         </p>
@@ -224,30 +244,17 @@ function CharacterQuote({
   );
 }
 
-const ArchiveCard = ({
-  item,
-  isPaths,
-  onClick,
-  onPositionChange,
-  isDraggable,
-  isDimmed,
-}: {
-  item: ArchiveItem,
-  isPaths: boolean,
-  onClick: () => void,
-  onPositionChange: (id: string, x: number, y: number) => void,
-  isDraggable: boolean,
-  isDimmed: boolean,
+const ArchiveCard = ({ item, isPaths, onClick, onPositionChange, isDraggable, isDimmed, overridePosition, isGridMode }: {
+  item: ArchiveItem; isPaths: boolean; onClick: () => void;
+  onPositionChange: (id: string, x: number, y: number) => void; isDraggable: boolean; isDimmed: boolean;
+  overridePosition?: { x: number; y: number }; isGridMode?: boolean;
 }) => {
   const rotation = useMemo(() => (Math.random() * 10 - 5), []);
-  const x = useMotionValue(item.position.x);
-  const y = useMotionValue(item.position.y);
-
-  useEffect(() => {
-    x.set(item.position.x);
-    y.set(item.position.y);
-  }, [item.position.x, item.position.y]);
-
+  const displayX = overridePosition ? overridePosition.x : item.position.x;
+  const displayY = overridePosition ? overridePosition.y : item.position.y;
+  const x = useMotionValue(displayX);
+  const y = useMotionValue(displayY);
+  useEffect(() => { x.set(displayX); y.set(displayY); }, [displayX, displayY]);
   const cardClass = useMemo(() => {
     switch (item.type) {
       case 'character': return 'polaroid w-44';
@@ -258,45 +265,28 @@ const ArchiveCard = ({
       default: return '';
     }
   }, [item.type]);
-
   return (
-    <motion.div
-      drag={isDraggable}
-      dragMomentum={false}
+    <motion.div drag={isDraggable} dragMomentum={false}
       onDrag={() => onPositionChange(item.id, x.get(), y.get())}
-      style={{ x, y, rotate: rotation }}
-      className="absolute transition-opacity duration-700"
-      animate={{ opacity: isDimmed ? 0.15 : 1 }}
-      transition={{ duration: 0.7 }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: -30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+      style={{ x, y, rotate: isGridMode ? 0 : rotation }} className="absolute transition-opacity duration-700"
+      animate={{ opacity: isDimmed ? 0 : 1 }} transition={{ duration: 0.7 }}>
+      <motion.div initial={{ opacity: 0, scale: 0.88, y: -30 }} animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: EASE_OUT_QUART }}
         whileHover={isDraggable ? { scale: 1.04, transition: { duration: 0.2, ease: EASE_OUT_QUART } } : undefined}
         onClick={onClick}
-        className={`${cardClass} ${isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} transition-colors duration-500 ${isPaths && item.type === 'character' ? 'border-blue-400/50 bg-blue-50/10' : ''}`}
-      >
+        className={`${cardClass} ${isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} transition-colors duration-500 ${isPaths && item.type === 'character' ? 'border-blue-400/50 bg-blue-50/10' : ''}`}>
         {item.type === 'character' && (
           <>
             <div className="aspect-[3/4] bg-gray-200 overflow-hidden mb-2 relative">
-              <img
-                src={item.image}
-                className={`w-full h-full object-cover transition-[filter] duration-700 ${isPaths ? 'grayscale-0 brightness-110 sepia-[.2] blue-filter' : 'grayscale'}`}
-                referrerPolicy="no-referrer"
-              />
+              <img src={item.image} className={`w-full h-full object-cover transition-[filter] duration-700 ${isPaths ? 'grayscale-0 brightness-110 sepia-[.2] blue-filter' : 'grayscale'}`} referrerPolicy="no-referrer" />
             </div>
-            <p className={`font-serif text-center text-xs font-bold transition-colors duration-500 ${isPaths ? 'text-blue-200' : 'text-black'}`}>
-              {item.title}
-            </p>
+            <p className={`font-serif text-center text-xs font-bold transition-colors duration-500 ${isPaths ? 'text-blue-200' : 'text-black'}`}>{item.title}</p>
           </>
         )}
-
         {item.type === 'location' && (
           <>
             <div className="flex items-center gap-2 mb-2 border-b border-blue-300/20 pb-1">
-              <MapIcon size={12} />
-              <span className="text-[10px] font-bold uppercase tracking-tighter">Geo Specimen: {item.title}</span>
+              <MapIcon size={12} /><span className="text-[10px] font-bold uppercase tracking-tighter">Geo Specimen: {item.title}</span>
             </div>
             {item.image && <img src={item.image} className="w-full h-24 object-cover opacity-60 mb-2 grayscale" referrerPolicy="no-referrer" />}
             <div className="text-[10px] leading-tight opacity-80 prose prose-invert max-w-none">
@@ -304,7 +294,6 @@ const ArchiveCard = ({
             </div>
           </>
         )}
-
         {item.type === 'event' && (
           <>
             <h4 className="font-serif font-bold text-sm mb-2 border-b border-black/20 pb-1 text-black/90">{item.title}</h4>
@@ -314,7 +303,6 @@ const ArchiveCard = ({
             <div className="mt-2 text-[8px] font-mono text-black/40 text-right">REF: {item.metadata?.time || 'UNKNOWN'}</div>
           </>
         )}
-
         {item.type === 'secret' && (
           <>
             <div className="flex items-center justify-between mb-2">
@@ -326,7 +314,6 @@ const ArchiveCard = ({
             <p className="text-[10px] leading-tight opacity-60">Click to decrypt classified data...</p>
           </>
         )}
-
         {item.type === 'perspective' && (
           <>
             <div className="text-[11px] leading-relaxed italic text-black/70 prose prose-invert max-w-none">
@@ -340,67 +327,843 @@ const ArchiveCard = ({
   );
 };
 
-// --- Minimap ---
+// (Sidebar removed — all navigation is now via floating canvas controls)
 
-function Minimap({
-  items,
-  viewportSize,
-  deskX,
-  deskY,
-  zoom,
-  onNavigate
-}: {
+// ===========================================================================
+// Section Grid View (cards in grid, same visual styles as canvas)
+// ===========================================================================
+
+function SectionCardContent({ item }: { item: ArchiveItem }) {
+  switch (item.type) {
+    case 'character':
+      return (
+        <div className="polaroid !w-full">
+          <div className="aspect-[3/4] bg-gray-200 overflow-hidden mb-2 relative">
+            {(item.image || item.cover) ? (
+              <img src={item.image || item.cover} className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                <span className="font-serif text-3xl text-gray-500">{item.title.charAt(0)}</span>
+              </div>
+            )}
+          </div>
+          <p className="font-serif text-center text-xs font-bold text-black">{item.title}</p>
+        </div>
+      );
+    case 'location':
+      return (
+        <div className="blueprint !w-full">
+          <div className="flex items-center gap-2 mb-2 border-b border-blue-300/20 pb-1">
+            <MapIcon size={12} /><span className="text-[10px] font-bold uppercase tracking-tighter">Geo Specimen: {item.title}</span>
+          </div>
+          {item.image && <img src={item.image} className="w-full h-24 object-cover opacity-60 mb-2 grayscale" referrerPolicy="no-referrer" />}
+          <div className="text-[10px] leading-tight opacity-80 prose prose-invert max-w-none">
+            <Markdown>{item.content.substring(0, 80) + '...'}</Markdown>
+          </div>
+        </div>
+      );
+    case 'event':
+      return (
+        <div className="newspaper-clip !w-full">
+          <h4 className="font-serif font-bold text-sm mb-2 border-b border-black/20 pb-1 text-black/90">{item.title}</h4>
+          <div className="text-[10px] leading-relaxed font-mono text-black/70 prose max-w-none">
+            <Markdown>{item.content.substring(0, 100) + '...'}</Markdown>
+          </div>
+          <div className="mt-2 text-[8px] font-mono text-black/40 text-right">REF: {item.metadata?.time || 'UNKNOWN'}</div>
+        </div>
+      );
+    case 'secret':
+      return (
+        <div className="top-secret-folder !w-full">
+          <div className="flex items-center justify-between mb-2">
+            <Lock size={14} className="text-titan-red" />
+            <span className="bg-titan-red text-white text-[8px] px-1 font-bold">CONFIDENTIAL</span>
+          </div>
+          <h4 className="font-serif font-bold text-xs mb-1">{item.title}</h4>
+          <div className="h-1 w-full bg-black/10 mb-2" />
+          <p className="text-[10px] leading-tight opacity-60">{item.content.replace(/[*#_`\[\]]/g, '').substring(0, 80)}...</p>
+        </div>
+      );
+    case 'perspective':
+      return (
+        <div className="handwritten-note !w-full !rotate-0">
+          <div className="text-[11px] leading-relaxed italic text-black/70 prose prose-invert max-w-none">
+            <Markdown>{`"${item.content.substring(0, 120)}..."`}</Markdown>
+          </div>
+          <div className="mt-3 text-[9px] font-bold text-titan-red/50">— {item.metadata?.author || 'Unknown'}</div>
+        </div>
+      );
+    default:
+      return (
+        <div className="bg-white/[0.06] border border-white/10 rounded-lg p-4">
+          <h4 className="font-serif font-bold text-sm text-white/80">{item.title}</h4>
+          <p className="text-[11px] text-white/40 mt-1">{item.content.substring(0, 60)}...</p>
+        </div>
+      );
+  }
+}
+
+function SectionGridView({ sectionId, items, onOpen, onBack, onCreate }: {
+  sectionId: string;
   items: ArchiveItem[];
-  viewportSize: { width: number; height: number };
-  deskX: ReturnType<typeof useMotionValue>;
-  deskY: ReturnType<typeof useMotionValue>;
-  zoom: ReturnType<typeof useMotionValue>;
-  onNavigate: (x: number, y: number) => void;
+  onOpen: (id: string) => void;
+  onBack: () => void;
+  onCreate: () => void;
 }) {
-  const WORLD_W = 2600;
-  const WORLD_H = 2200;
-  const MAP_W = 160;
-  const MAP_H = (WORLD_H / WORLD_W) * MAP_W;
-  const scale = MAP_W / WORLD_W;
+  const section = NARRATIVE_SECTIONS.find(s => s.id === sectionId);
+  if (!section) return null;
 
-  const typeColors: Record<ArchiveType, string> = {
-    character: '#3b82f6',
-    location: '#22c55e',
-    event: '#eab308',
-    secret: '#ef4444',
-    perspective: '#a855f7',
+  const sectionType = SECTION_TYPE_MAP[sectionId];
+  const sectionItems = useMemo(
+    () => items.filter(i => i.type === sectionType),
+    [items, sectionType]
+  );
+
+  // Grid columns adjusted for floating panel layout
+  const gridColsAdj = sectionType === 'character' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.35, ease: EASE_OUT_QUART }}
+      className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm">
+
+      {/* Floating section panel — leaves space for left nav & right agent */}
+      <div className="absolute top-4 bottom-4 left-[200px] right-[440px] min-w-[480px] overflow-y-auto workspace-scroll agent-panel">
+
+      <div className="px-10 pt-8 pb-20">
+        {/* Section Header */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.05 }}>
+          <h2 className={`font-serif text-5xl font-bold tracking-tight mb-4 ${section.titleClass || 'text-white/80'}`}>
+            {section.title}
+          </h2>
+          <p className={`whitespace-pre-line max-w-lg mb-6 ${section.textClass || 'text-sm text-white/35 leading-relaxed'}`}>
+            {section.text}
+          </p>
+          <div className="flex items-center gap-4 mb-10">
+            <span className="font-mono text-[11px] text-white/20">{sectionItems.length} items</span>
+            <button onClick={onCreate}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-white/10 text-white/30 text-[11px] font-mono hover:border-white/20 hover:text-white/50 hover:bg-white/[0.03] transition-all duration-200">
+              <Plus size={12} /><span>New</span>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Card Grid */}
+        {sectionItems.length === 0 ? (
+          <div className="text-center py-20 text-white/15 font-mono text-[12px]">No items yet — create one to get started</div>
+        ) : (
+          <div className={`grid ${gridColsAdj} gap-6`}>
+            {sectionItems.map((item, idx) => (
+              <motion.div key={item.id}
+                initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, ease: EASE_OUT_QUART, delay: 0.1 + idx * 0.04 }}
+                onClick={() => onOpen(item.id)}
+                className="cursor-pointer group">
+                <div className="transition-transform duration-200 group-hover:scale-[1.03] group-hover:-translate-y-1">
+                  <SectionCardContent item={item} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ===========================================================================
+// Document Workspace
+// ===========================================================================
+
+function DocumentWorkspace({ item, items, onClose, onUpdate, onNavigateItem }: {
+  item: ArchiveItem;
+  items: ArchiveItem[];
+  onClose: () => void;
+  onUpdate: (id: string, updates: Partial<ArchiveItem>) => void;
+  onNavigateItem: (id: string) => void;
+}) {
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editContent, setEditContent] = useState(item.content);
+  const [editTitle, setEditTitle] = useState(item.title);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { setEditContent(item.content); setEditTitle(item.title); }, [item.id]);
+
+  useEffect(() => {
+    if (isEditingContent && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.focus();
+    }
+  }, [isEditingContent, editContent]);
+
+  const saveContent = () => {
+    onUpdate(item.id, { content: editContent, updatedAt: Date.now() });
+    setIsEditingContent(false);
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left) / scale - WORLD_W / 2;
-    const clickY = (e.clientY - rect.top) / scale - WORLD_H / 2;
-    onNavigate(clickX, clickY);
+  const saveTitle = () => {
+    onUpdate(item.id, { title: editTitle, updatedAt: Date.now() });
+    setIsEditingTitle(false);
+  };
+
+  const coverSrc = item.cover || item.image;
+  const connectedItems = useMemo(() => {
+    if (!item.connections) return [];
+    return item.connections.map(id => items.find(i => i.id === id)).filter(Boolean) as ArchiveItem[];
+  }, [item.connections, items]);
+
+  const proseClass = item.type === 'story' ? 'workspace-prose workspace-prose-story'
+    : item.type === 'perspective' ? 'workspace-prose workspace-prose-perspective'
+    : 'workspace-prose';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: EASE_OUT_QUART } }}
+      className="absolute inset-0">
+
+      {/* Content area — left space for nav sidebar, right space for agent panel */}
+      <div className="absolute top-0 bottom-0 left-[180px] right-[420px] overflow-y-auto workspace-scroll">
+
+        {/* Top bar */}
+        <div className="sticky top-0 z-10 h-12 flex items-center px-8 bg-[#0a0a0a]/90 backdrop-blur-sm border-b border-white/[0.03]">
+          <button onClick={onClose}
+            className="flex items-center gap-2 text-white/30 hover:text-white/60 text-[12px] font-mono transition-colors duration-200">
+            <ChevronLeft size={16} /><span>Back</span>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-[640px] mx-auto px-8 pb-24">
+          {/* Cover */}
+          <div className="w-full h-[260px] mt-2 relative overflow-hidden rounded-lg">
+            {coverSrc ? (
+              <>
+                <img src={coverSrc} className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 40%, #0a0a0a 100%)' }} />
+              </>
+            ) : (
+              <div className="w-full h-full rounded-lg" style={{ background: COVER_GRADIENTS[item.type] || COVER_GRADIENTS.character }} />
+            )}
+          </div>
+
+          {/* Type badge */}
+          <div className="mt-6 mb-3 flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: TYPE_COLORS[item.type] }} />
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/25">{item.type}</span>
+          </div>
+
+          {/* Title */}
+          {isEditingTitle ? (
+            <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
+              onBlur={saveTitle} onKeyDown={e => { if (e.key === 'Enter') saveTitle(); }}
+              autoFocus
+              className="font-serif text-[40px] font-bold leading-[1.15] tracking-tight text-white/90 bg-transparent outline-none w-full border-b border-white/10 pb-1" />
+          ) : (
+            <h1 onClick={() => setIsEditingTitle(true)}
+              className="font-serif text-[40px] font-bold leading-[1.15] tracking-tight text-white/90 cursor-text hover:text-white transition-colors duration-200">
+              {item.title}
+            </h1>
+          )}
+
+          {/* Secret watermark */}
+          {item.type === 'secret' && (
+            <div className="relative overflow-hidden pointer-events-none select-none h-0">
+              <span className="absolute -top-20 -right-10 font-mono text-[80px] text-red-500/[0.04] rotate-[-15deg] font-bold">
+                CLASSIFIED
+              </span>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="mt-8">
+            {isEditingContent ? (
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono text-white/20 mb-4">
+                  Editing · Markdown supported · Click outside to save
+                </div>
+                <textarea ref={textareaRef} value={editContent}
+                  onChange={e => { setEditContent(e.target.value); }}
+                  onBlur={saveContent}
+                  className="w-full min-h-[400px] bg-transparent font-mono text-[14px] leading-[1.75] text-white/70 outline-none resize-none placeholder:text-white/15"
+                  placeholder="Start writing..." />
+              </div>
+            ) : (
+              <div onClick={() => setIsEditingContent(true)} className={`${proseClass} cursor-text`}>
+                <Markdown>{item.content}</Markdown>
+              </div>
+            )}
+          </div>
+
+          {/* Connections */}
+          {connectedItems.length > 0 && (
+            <div className="mt-16 pt-8 border-t border-white/[0.06]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/20 mb-4">Connected</p>
+              <div className="flex flex-wrap gap-2">
+                {connectedItems.map(ci => (
+                  <button key={ci.id} onClick={() => onNavigateItem(ci.id)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200">
+                    {(ci.cover || ci.image) ? (
+                      <img src={ci.cover || ci.image} className="w-5 h-5 rounded-full object-cover grayscale" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: TYPE_COLORS[ci.type] + '20' }}>
+                        <span className="text-[8px]" style={{ color: TYPE_COLORS[ci.type] }}>{ci.title.charAt(0)}</span>
+                      </div>
+                    )}
+                    <span className="text-[12px] text-white/50">{ci.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ===========================================================================
+// Asset Workspace
+// ===========================================================================
+
+function AssetWorkspace({ item, onClose, onUpdate }: {
+  item: ArchiveItem; onClose: () => void; onUpdate: (id: string, updates: Partial<ArchiveItem>) => void;
+}) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title);
+
+  useEffect(() => { setEditTitle(item.title); }, [item.id]);
+
+  const saveTitle = () => {
+    onUpdate(item.id, { title: editTitle, updatedAt: Date.now() });
+    setIsEditingTitle(false);
   };
 
   return (
-    <div
-      className="bg-black/60 border border-white/10 rounded-lg backdrop-blur-md cursor-crosshair overflow-hidden"
-      style={{ width: MAP_W, height: MAP_H }}
-      onClick={handleClick}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: EASE_OUT_QUART } }}
+      className="absolute inset-0">
+
+      {/* Content area — left space for nav sidebar, right space for agent panel */}
+      <div className="absolute top-0 bottom-0 left-[180px] right-[420px] overflow-y-auto workspace-scroll">
+        <div className="sticky top-0 z-10 h-12 flex items-center px-8 bg-[#0a0a0a]/90 backdrop-blur-sm border-b border-white/[0.03]">
+          <button onClick={onClose}
+            className="flex items-center gap-2 text-white/30 hover:text-white/60 text-[12px] font-mono transition-colors duration-200">
+            <ChevronLeft size={16} /><span>Back</span>
+          </button>
+        </div>
+
+        <div className="max-w-[700px] mx-auto px-8 pb-20">
+          <div className="w-full mt-6 rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+            {item.type === 'image' && <img src={item.content} className="w-full max-h-[60vh] object-contain mx-auto bg-[#080808]" />}
+            {item.type === 'video' && <video src={item.content} controls className="w-full max-h-[60vh] rounded-xl" />}
+            {item.type === 'game' && <iframe src={item.content} className="w-full aspect-video border-none" />}
+          </div>
+
+          <div className="mt-6">
+            {isEditingTitle ? (
+              <input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                onBlur={saveTitle} onKeyDown={e => { if (e.key === 'Enter') saveTitle(); }}
+                autoFocus
+                className="font-serif text-[28px] font-bold text-white/85 bg-transparent outline-none w-full border-b border-white/10 pb-1" />
+            ) : (
+              <h1 onClick={() => setIsEditingTitle(true)}
+                className="font-serif text-[28px] font-bold text-white/85 cursor-text hover:text-white transition-colors duration-200">
+                {item.title}
+              </h1>
+            )}
+            <div className="mt-2 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: TYPE_COLORS[item.type] }} />
+              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/25">{item.type}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ===========================================================================
+// Unified AI Agent Panel (narrative build log → interactive chat)
+// ===========================================================================
+
+interface AIMessage { role: 'user' | 'assistant' | 'system'; content: string; }
+
+// Creative suggestion prompts shown when agent panel expands after world build
+const CREATIVE_SUGGESTIONS = [
+  { icon: <User size={13} />, label: 'Create a new character', prompt: 'Create a new character for this world' },
+  { icon: <MapPin size={13} />, label: 'Discover a hidden location', prompt: 'Invent a hidden location in this world' },
+  { icon: <Flame size={13} />, label: 'Write the next event', prompt: 'What event happens next in this world?' },
+  { icon: <Lock size={13} />, label: 'Uncover a secret', prompt: 'Reveal a hidden secret about this world' },
+  { icon: <PenLine size={13} />, label: 'Write a perspective', prompt: 'Write a first-person perspective from someone in this world' },
+];
+
+function WorldAgentPanel({
+  worldName, phase, activeSectionIndex, isExpanded, onToggleExpand
+}: {
+  worldName: string;
+  phase: 'narrating' | 'free';
+  activeSectionIndex: number;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) {
+  const isNarrating = phase === 'narrating';
+  const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [thinkingTime, setThinkingTime] = useState(0);
+  const [showBuildLog, setShowBuildLog] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [hasTransitioned, setHasTransitioned] = useState(false);
+
+  // When transitioning from narrating → free, add welcome message and auto-expand
+  useEffect(() => {
+    if (!isNarrating && !hasTransitioned) {
+      setHasTransitioned(true);
+      setTimeout(() => {
+        setShowBuildLog(false);
+        setMessages([
+          { role: 'system', content: `World built · ${worldName}` },
+          { role: 'assistant', content: `**${worldName}** is ready to explore.\n\nI'm your creative partner — I can help you generate characters, events, locations, secrets, and more. Pick a suggestion below or ask me anything about this world.` },
+        ]);
+        onToggleExpand(); // auto-expand
+      }, 600);
+      setTimeout(() => { inputRef.current?.focus(); }, 1200);
+    }
+  }, [isNarrating, hasTransitioned, worldName, onToggleExpand]);
+
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isTyping]);
+
+  // Thinking timer
+  useEffect(() => {
+    if (!isTyping) { setThinkingTime(0); return; }
+    const interval = setInterval(() => setThinkingTime(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isTyping]);
+
+  const handleSubmit = (text?: string) => {
+    const msg = text || input.trim();
+    if (!msg || isNarrating) return;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: msg }]);
+    setIsTyping(true);
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `I understand you want to explore "${msg}". This is a prototype — in the full version, I'll use AI to generate rich world content, create new entities, and help you build your story.`
+      }]);
+      setIsTyping(false);
+    }, 1500 + Math.random() * 1000);
+  };
+
+  const visibleSteps = AGENT_STEPS.filter(step => step.sectionIndex <= activeSectionIndex);
+  const showSuggestions = isExpanded && !isNarrating && !showBuildLog && messages.length <= 2 && !isTyping;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.96, transition: { duration: 0.3 } }}
+      transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+      className={`fixed z-[88] transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+        isNarrating
+          ? 'bottom-20 right-6 w-[300px]'
+          : isExpanded
+            ? 'top-4 right-4 bottom-4 w-[400px]'
+            : 'bottom-6 right-6 w-[340px]'
+      }`}
     >
-      <svg width={MAP_W} height={MAP_H}>
-        {items.map(item => (
-          <circle
-            key={item.id}
-            cx={(item.position.x + WORLD_W / 2) * scale}
-            cy={(item.position.y + WORLD_H / 2) * scale}
-            r={2.5}
-            fill={typeColors[item.type]}
-            opacity={0.7}
-          />
-        ))}
-      </svg>
+      <motion.div
+        layout
+        className={`agent-panel flex flex-col overflow-hidden ${
+          isNarrating ? 'max-h-[320px]' : isExpanded ? 'h-full' : 'max-h-[420px]'
+        }`}
+      >
+        {/* Header */}
+        <div
+          className="flex-shrink-0 px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors duration-200"
+          onClick={!isNarrating ? onToggleExpand : undefined}
+        >
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-white/[0.04]">
+              <div className={`w-2 h-2 rounded-full ${isNarrating ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+              <div className={`absolute w-2 h-2 rounded-full ${isNarrating ? 'bg-amber-400/40 animate-ping' : 'bg-emerald-400/20 animate-pulse'}`} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/70 font-medium">
+                World Agent
+              </span>
+              {isNarrating && (
+                <span className="font-mono text-[9px] text-amber-400/60 tracking-wide">building world...</span>
+              )}
+            </div>
+          </div>
+          {!isNarrating && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+              className="p-1.5 rounded-md text-white/25 hover:text-white/50 hover:bg-white/[0.06] transition-all duration-150"
+            >
+              {isExpanded ? <ChevronLeft size={14} className="rotate-[-90deg]" /> : <ChevronLeft size={14} className="rotate-90" />}
+            </button>
+          )}
+        </div>
+
+        {/* Build Log (during narrative + briefly after) */}
+        <AnimatePresence>
+          {(isNarrating || showBuildLog) && (
+            <motion.div
+              initial={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: EASE_OUT_QUART }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 py-3 mx-3 mb-2 rounded-xl bg-white/[0.02] border border-white/[0.04] flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Build Progress</span>
+                  <span className="font-mono text-[10px] text-white/20">{visibleSteps.filter(s => s.sectionIndex < activeSectionIndex).length}/{AGENT_STEPS.length}</span>
+                </div>
+                {visibleSteps.map((step, i) => {
+                  const isCurrent = step.sectionIndex === activeSectionIndex;
+                  const isDone = step.sectionIndex < activeSectionIndex;
+                  return (
+                    <motion.div
+                      key={step.sectionIndex}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: EASE_OUT_QUART, delay: i === visibleSteps.length - 1 ? 0.2 : 0 }}
+                      className={`flex items-center gap-2.5 py-1 px-2 rounded-lg transition-colors duration-300 ${isCurrent ? 'bg-white/[0.03]' : ''}`}
+                    >
+                      {isDone ? (
+                        <div className="w-4 h-4 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+                          <span className="text-[9px] text-emerald-400">✓</span>
+                        </div>
+                      ) : isCurrent ? (
+                        <div className="w-4 h-4 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+                          <motion.div className="w-1.5 h-1.5 rounded-full bg-amber-400"
+                            animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-white/[0.04] shrink-0" />
+                      )}
+                      <span className={`font-mono leading-tight ${
+                        isCurrent ? 'text-[11px] text-white/65' : isDone ? 'text-[11px] text-white/30' : 'text-[11px] text-white/15'
+                      }`}>{step.message}</span>
+                      {isDone && <span className="ml-auto text-[9px] font-mono text-white/15">Done</span>}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Chat Messages (free mode) */}
+        {!isNarrating && !showBuildLog && (
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-3">
+            {messages.map((msg, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: EASE_OUT_QUART, delay: i * 0.05 }}>
+                {msg.role === 'system' ? (
+                  <div className="flex items-center gap-3 py-3">
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                    <p className="text-[10px] font-mono text-white/25 shrink-0">{msg.content}</p>
+                    <div className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+                ) : msg.role === 'user' ? (
+                  <div className="flex justify-end">
+                    <div className="bg-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3 text-[13px] text-white/80 leading-relaxed max-w-[85%]">
+                      {msg.content}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3 items-start">
+                    <div className="w-6 h-6 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                      <Compass size={12} className="text-white/40" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] text-white/60 leading-[1.75]">
+                        <Markdown>{msg.content}</Markdown>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+
+            {/* Creative Suggestions */}
+            {showSuggestions && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.3 }}
+                className="pt-3 pb-1"
+              >
+                <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/20 mb-3 px-1">Try creating</p>
+                <div className="flex flex-col gap-1.5">
+                  {CREATIVE_SUGGESTIONS.map((s, i) => (
+                    <motion.button
+                      key={i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: EASE_OUT_QUART, delay: 0.4 + i * 0.06 }}
+                      onClick={() => handleSubmit(s.prompt)}
+                      className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-left text-[12px] text-white/45 hover:text-white/80 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/[0.12] transition-all duration-200 group"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-white/[0.04] group-hover:bg-white/[0.08] flex items-center justify-center transition-colors duration-200 shrink-0">
+                        <span className="text-white/25 group-hover:text-white/60 transition-colors duration-200">{s.icon}</span>
+                      </div>
+                      <span className="font-medium">{s.label}</span>
+                      <ChevronLeft size={12} className="ml-auto rotate-180 text-white/10 group-hover:text-white/30 transition-colors duration-200" />
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Thinking indicator */}
+            {isTyping && (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex gap-3 items-start">
+                <div className="w-6 h-6 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                  <Compass size={12} className="text-white/40" />
+                </div>
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                    <motion.div className="w-1.5 h-1.5 rounded-full bg-violet-400/60"
+                      animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+                    <span className="text-[11px] font-mono text-white/35">Thinking</span>
+                    {thinkingTime > 0 && (
+                      <span className="text-[10px] font-mono text-white/20">{thinkingTime}s</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Input area */}
+        <div className="flex-shrink-0 px-3 pb-3 pt-2">
+          <div className={`flex items-center gap-2 rounded-xl border transition-all duration-200 ${
+            isNarrating
+              ? 'bg-white/[0.02] border-white/[0.04]'
+              : 'bg-white/[0.03] border-white/[0.06] focus-within:border-white/[0.15] focus-within:bg-white/[0.05]'
+          }`}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && input.trim()) handleSubmit(); }}
+              placeholder={isNarrating ? 'Building world...' : 'Ask anything, or describe what to create...'}
+              disabled={isNarrating}
+              className="flex-1 bg-transparent px-4 py-2.5 text-[12px] outline-none text-white/80 placeholder:text-white/20 disabled:text-white/15 disabled:placeholder:text-white/10 disabled:cursor-not-allowed"
+            />
+            <div className="flex items-center gap-0.5 pr-1.5">
+              {!isNarrating && (
+                <button className="p-2 rounded-lg text-white/15 hover:text-white/40 hover:bg-white/[0.04] transition-all duration-150">
+                  <Plus size={14} />
+                </button>
+              )}
+              <button
+                onClick={() => { if (input.trim()) handleSubmit(); }}
+                disabled={isNarrating}
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  isNarrating
+                    ? 'text-white/10 cursor-not-allowed'
+                    : input.trim()
+                      ? 'text-white bg-white/[0.12] hover:bg-white/[0.18]'
+                      : 'text-white/15 hover:text-white/30 hover:bg-white/[0.04]'
+                }`}
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          </div>
+          {/* Model indicator */}
+          {!isNarrating && (
+            <div className="flex items-center gap-1.5 mt-1.5 px-2">
+              <Compass size={10} className="text-white/15" />
+              <span className="text-[10px] font-mono text-white/15">Gemini 2.5</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ===========================================================================
+// Helper Components
+// ===========================================================================
+
+function ControlButton({ active, onClick, icon, label, color = 'red' }: {
+  active?: boolean; onClick: () => void; icon: React.ReactNode; label: string; color?: 'red' | 'blue';
+}) {
+  const activeClass = color === 'blue'
+    ? 'bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)]'
+    : 'bg-titan-red text-white shadow-[0_0_20px_rgba(136,8,8,0.5)]';
+  return (
+    <div className="group flex items-center gap-3">
+      <button onClick={onClick}
+        className={`p-3 rounded-full transition-colors duration-200 ${active ? activeClass : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'}`}>
+        {icon}
+      </button>
+      <span className={`text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap ${active ? 'text-white' : 'text-white/40'}`}>
+        {label}
+      </span>
     </div>
   );
 }
 
-// --- Main App ---
+function Typewriter({ text, speed = 30, onComplete }: { text: string; speed?: number; onComplete?: () => void }) {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const isDone = currentIndex >= text.length;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeout);
+    } else if (onCompleteRef.current) { onCompleteRef.current(); }
+  }, [currentIndex, text, speed]);
+  return <span className={isDone ? '' : 'cursor-blink'}>{displayedText}</span>;
+}
+
+function TableOfContents({ sections, items, activeView, onSectionClick, onCardClick, onOverview, onCreateNew, variant = 'floating' }: {
+  sections: NarrativeSection[]; items: ArchiveItem[];
+  activeView: ViewState;
+  onSectionClick: (section: NarrativeSection) => void; onCardClick: (item: ArchiveItem) => void;
+  onOverview: () => void;
+  onCreateNew: () => void;
+  variant?: 'floating' | 'flat';
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Determine which section is "active" (section grid or workspace of an item in that section)
+  const activeSectionId = activeView.kind === 'section'
+    ? (activeView as { sectionId: string }).sectionId
+    : activeView.kind === 'workspace'
+      ? (() => {
+          const item = items.find(i => i.id === (activeView as { itemId: string }).itemId);
+          if (!item) return null;
+          const entry = Object.entries(SECTION_TYPE_MAP).find(([, type]) => type === item.type);
+          return entry ? entry[0] : null;
+        })()
+      : null;
+
+  // Auto-expand when active section changes
+  useEffect(() => {
+    if (activeSectionId) setExpandedId(activeSectionId);
+  }, [activeSectionId]);
+
+  const handleSectionClick = (section: NarrativeSection) => {
+    if (expandedId === section.id && activeView.kind === 'overview') {
+      setExpandedId(null);
+    } else {
+      setExpandedId(section.id);
+    }
+    onSectionClick(section);
+  };
+
+  const isNotOverview = activeView.kind !== 'overview';
+
+  return (
+    <nav className={`pointer-events-auto select-none px-3.5 py-3 ${variant === 'flat' ? 'bg-transparent border-r border-white/[0.04]' : 'nav-panel'}`}>
+      {/* Overview button (when not in overview) */}
+      {isNotOverview && (
+        <button onClick={onOverview}
+          className="flex items-center gap-2 py-1.5 px-1 mb-1 text-left text-white/30 hover:text-white/60 transition-colors duration-200 w-full">
+          <ChevronLeft size={12} />
+          <span className="font-mono text-[10px] uppercase tracking-widest">Overview</span>
+        </button>
+      )}
+      <ul className="flex flex-col gap-0.5">
+        {sections.map((section) => {
+          const isActive = activeSectionId === section.id;
+          const isOpen = expandedId === section.id;
+          const sectionType = SECTION_TYPE_MAP[section.id];
+          const sectionItems = sectionType
+            ? items.filter(i => i.type === sectionType)
+            : section.cardIds.map(id => items.find(i => i.id === id)).filter(Boolean) as ArchiveItem[];
+          const count = sectionItems.length;
+
+          // Highlight current workspace item
+          const activeItemId = activeView.kind === 'workspace' ? (activeView as { itemId: string }).itemId : null;
+
+          return (
+            <li key={section.id}>
+              <button onClick={() => handleSectionClick(section)}
+                className={`flex items-center gap-2 py-1.5 px-1 text-left transition-colors duration-200 group w-full ${isActive ? 'text-white/90' : isOpen ? 'text-white/80' : 'text-white/30 hover:text-white/60'}`}>
+                <span className={`w-3 text-[8px] font-mono transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>
+                  {isActive ? '●' : '›'}
+                </span>
+                <span className="font-serif text-sm tracking-wide flex-1">{section.title}</span>
+                <span className="font-mono text-[10px] text-white/15">{count}</span>
+              </button>
+              <AnimatePresence>
+                {isOpen && sectionItems.length > 0 && (
+                  <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: EASE_OUT_QUART }}
+                    className="overflow-hidden">
+                    {sectionItems.map((si) => (
+                      <li key={si.id}>
+                        <button onClick={() => onCardClick(si)}
+                          className={`w-full text-left pl-6 pr-2 py-1 text-[11px] transition-colors duration-200 truncate font-mono ${
+                            activeItemId === si.id ? 'text-white/70' : 'text-white/25 hover:text-white/50'
+                          }`}>
+                          {si.title}
+                        </button>
+                      </li>
+                    ))}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </li>
+          );
+        })}
+      </ul>
+      {/* Create button */}
+      <div className="mt-2 pt-2 border-t border-white/5">
+        <button onClick={onCreateNew}
+          className="flex items-center gap-2 py-1 px-1 text-white/20 hover:text-white/50 transition-colors duration-200 w-full">
+          <Plus size={12} />
+          <span className="font-mono text-[10px] uppercase tracking-widest">New</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// --- Agent build steps (used by WorldAgentPanel) ---
+const AGENT_STEPS: { sectionIndex: number; message: string }[] = [
+  { sectionIndex: 0, message: 'Initializing world engine...' },
+  { sectionIndex: 1, message: 'Parsing world lore...' },
+  { sectionIndex: 2, message: 'Generating characters...' },
+  { sectionIndex: 3, message: 'Mapping locations...' },
+  { sectionIndex: 4, message: 'Recording events...' },
+  { sectionIndex: 5, message: 'Classifying intel...' },
+  { sectionIndex: 6, message: 'Collecting perspectives...' },
+];
+
+// ===========================================================================
+// Main App
+// ===========================================================================
 
 export default function App() {
   // Narrative state
@@ -415,15 +1178,17 @@ export default function App() {
   const cancelRef = useRef(false);
   const typewriterResolveRef = useRef<(() => void) | null>(null);
 
+  // View state
+  const [view, setView] = useState<ViewState>({ kind: 'overview' });
+  const [isAgentExpanded, setIsAgentExpanded] = useState(false);
+
   // Background music
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     const audio = new Audio('/bgm.mp3');
-    audio.loop = true;
-    audio.volume = 0.3;
-    audioRef.current = audio;
+    audio.loop = true; audio.volume = 0.3; audioRef.current = audio;
     return () => { audio.pause(); audio.src = ''; };
   }, []);
 
@@ -433,41 +1198,26 @@ export default function App() {
     audioRef.current?.play();
   }, [worldInput]);
 
-  // Fade out BGM when narrative completes
   useEffect(() => {
     if (narrativePhase !== 'free') return;
     const audio = audioRef.current;
     if (!audio) return;
-
-    const fadeDuration = 4000;
-    const steps = 40;
-    const interval = fadeDuration / steps;
-    const startVolume = audio.volume;
-    let step = 0;
-
+    const fadeDuration = 4000, steps = 40, interval = fadeDuration / steps;
+    const startVolume = audio.volume; let step = 0;
     const timer = setInterval(() => {
-      step++;
-      audio.volume = Math.max(0, startVolume * (1 - step / steps));
-      if (step >= steps) {
-        clearInterval(timer);
-        audio.pause();
-      }
+      step++; audio.volume = Math.max(0, startVolume * (1 - step / steps));
+      if (step >= steps) { clearInterval(timer); audio.pause(); }
     }, interval);
-
     return () => clearInterval(timer);
   }, [narrativePhase]);
 
   const toggleMute = useCallback(() => {
     if (!audioRef.current) return;
-    setIsMuted(m => {
-      audioRef.current!.muted = !m;
-      return !m;
-    });
+    setIsMuted(m => { audioRef.current!.muted = !m; return !m; });
   }, []);
 
-  // Existing state
+  // Data state
   const [isPathsMode, setIsPathsMode] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ArchiveItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState(ARCHIVE_DATA);
 
@@ -485,12 +1235,7 @@ export default function App() {
 
   useEffect(() => {
     const updateSize = () => {
-      if (viewportRef.current) {
-        setViewportSize({
-          width: viewportRef.current.clientWidth,
-          height: viewportRef.current.clientHeight
-        });
-      }
+      if (viewportRef.current) setViewportSize({ width: viewportRef.current.clientWidth, height: viewportRef.current.clientHeight });
     };
     updateSize();
     window.addEventListener('resize', updateSize);
@@ -501,9 +1246,7 @@ export default function App() {
 
   const cardSectionMap = useMemo(() => {
     const map: Record<string, number> = {};
-    NARRATIVE_SECTIONS.forEach((section, i) => {
-      section.cardIds.forEach(id => { map[id] = i; });
-    });
+    NARRATIVE_SECTIONS.forEach((section, i) => { section.cardIds.forEach(id => { map[id] = i; }); });
     return map;
   }, []);
 
@@ -511,11 +1254,7 @@ export default function App() {
     const visible = items.filter(item => isFree || revealedCards.has(item.id));
     if (!searchQuery) return visible;
     const q = searchQuery.toLowerCase();
-    return visible.filter(item =>
-      item.title.toLowerCase().includes(q) ||
-      item.content.toLowerCase().includes(q) ||
-      item.type.toLowerCase().includes(q)
-    );
+    return visible.filter(item => item.title.toLowerCase().includes(q) || item.content.toLowerCase().includes(q) || item.type.toLowerCase().includes(q));
   }, [items, searchQuery, revealedCards, isFree]);
 
   const handlePositionChange = (id: string, x: number, y: number) => {
@@ -523,125 +1262,84 @@ export default function App() {
   };
 
   const panTo = useCallback((x: number, y: number, z: number) => {
-    deskX.set(-x * z);
-    deskY.set(-y * z);
-    zoom.set(z);
+    deskX.set(-x * z); deskY.set(-y * z); zoom.set(z);
   }, [deskX, deskY, zoom]);
 
   const jumpTo = (x: number, y: number, z: number = 1) => {
-    deskX.set(-x * z);
-    deskY.set(-y * z);
-    zoom.set(z);
+    deskX.set(-x * z); deskY.set(-y * z); zoom.set(z);
   };
 
-  const resetView = () => {
-    deskX.set(0);
-    deskY.set(0);
-    zoom.set(0.6);
-  };
+  const resetView = () => { deskX.set(0); deskY.set(0); zoom.set(0.6); };
 
-  const waitForTypewriter = useCallback(() => {
-    return new Promise<void>((resolve) => {
-      typewriterResolveRef.current = resolve;
-    });
-  }, []);
+  const waitForTypewriter = useCallback(() => new Promise<void>((resolve) => { typewriterResolveRef.current = resolve; }), []);
 
   const onTypewriterComplete = useCallback(() => {
-    if (typewriterResolveRef.current) {
-      typewriterResolveRef.current();
-      typewriterResolveRef.current = null;
-    }
+    if (typewriterResolveRef.current) { typewriterResolveRef.current(); typewriterResolveRef.current = null; }
   }, []);
 
-  // --- Narrative Sequencer ---
+  const updateItem = useCallback((id: string, updates: Partial<ArchiveItem>) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+  }, []);
 
+  const createNewItem = useCallback((kind: 'document' | 'asset', type: string) => {
+    const newItem: ArchiveItem = {
+      id: `item-${Date.now()}`,
+      kind,
+      type: type as ArchiveType | AssetType,
+      title: 'Untitled',
+      content: '',
+      position: { x: Math.random() * 400 - 200, y: Math.random() * 400 - 200 },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      createdBy: 'user',
+    };
+    setItems(prev => [...prev, newItem]);
+    setView({ kind: 'workspace', itemId: newItem.id });
+  }, []);
+
+  // --- Narrative Sequencer (UNCHANGED) ---
   useEffect(() => {
     if (!hasEntered || narrativePhase !== 'narrating') return;
     cancelRef.current = false;
-
     const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     const done = () => cancelRef.current;
-
     (async () => {
-      await wait(1500);
-      if (done()) return;
-
+      await wait(1500); if (done()) return;
       for (let i = 0; i < NARRATIVE_SECTIONS.length; i++) {
         const section = NARRATIVE_SECTIONS[i];
-
-        // Pan camera to section
         setActiveSectionIndex(i);
         panTo(section.camera.x, section.camera.y, section.camera.zoom);
-
-        await wait(1200);
-        if (done()) return;
-
-        // Show title
-        if (section.title) {
-          setSectionStates(prev => ({ ...prev, [i]: 'title' }));
-          await waitForTypewriter();
-          await wait(400);
-          if (done()) return;
-        }
-
-        // Show text
-        setSectionStates(prev => ({ ...prev, [i]: 'text' }));
-        await waitForTypewriter();
-        await wait(800);
-        if (done()) return;
-
-        // Reveal cards one by one
+        await wait(1200); if (done()) return;
+        if (section.title) { setSectionStates(prev => ({ ...prev, [i]: 'title' })); await waitForTypewriter(); await wait(400); if (done()) return; }
+        setSectionStates(prev => ({ ...prev, [i]: 'text' })); await waitForTypewriter(); await wait(800); if (done()) return;
         for (let j = 0; j < section.cardIds.length; j++) {
           const cardId = section.cardIds[j];
           setRevealedCards(prev => new Set([...prev, cardId]));
-
-          if (section.quotes?.[cardId]) {
-            await wait(500);
-            if (done()) return;
-            setVisibleQuotes(prev => new Set([...prev, cardId]));
-          }
-
-          await wait(j < 3 ? 700 : 450);
-          if (done()) return;
+          if (section.quotes?.[cardId]) { await wait(500); if (done()) return; setVisibleQuotes(prev => new Set([...prev, cardId])); }
+          await wait(j < 3 ? 700 : 450); if (done()) return;
         }
-
         setSectionStates(prev => ({ ...prev, [i]: 'complete' }));
-
-        await wait(1600);
-        if (done()) return;
+        await wait(1600); if (done()) return;
       }
-
-      // Finale
       setNarrativePhase('free');
       panTo(-50, -200, 0.45);
     })();
-
     return () => { cancelRef.current = true; };
   }, [hasEntered, narrativePhase, panTo, waitForTypewriter]);
 
-  // Skip narrative
   const skipNarrative = useCallback(() => {
     cancelRef.current = true;
-    if (typewriterResolveRef.current) {
-      typewriterResolveRef.current();
-      typewriterResolveRef.current = null;
-    }
-
+    if (typewriterResolveRef.current) { typewriterResolveRef.current(); typewriterResolveRef.current = null; }
     const allSections: Record<number, 'complete'> = {};
     NARRATIVE_SECTIONS.forEach((_, i) => { allSections[i] = 'complete'; });
     setSectionStates(allSections);
-
-    const allCards = new Set(ARCHIVE_DATA.map(item => item.id));
-    setRevealedCards(allCards);
-
-    const allQuotes = new Set(Object.keys(QUOTES));
-    setVisibleQuotes(allQuotes);
-
+    setRevealedCards(new Set(ARCHIVE_DATA.map(item => item.id)));
+    setVisibleQuotes(new Set(Object.keys(QUOTES)));
     setNarrativePhase('free');
     panTo(-50, -200, 0.45);
   }, [panTo]);
 
-  // Connection lines for Paths Mode
+  // Connection lines
   const connectionLines = useMemo(() => {
     const lines: { id: string; x1: number; y1: number; x2: number; y2: number }[] = [];
     items.forEach(item => {
@@ -650,15 +1348,8 @@ export default function App() {
           const target = items.find(i => i.id === targetId);
           if (target) {
             const lineId = [item.id, target.id].sort().join('-');
-            if (!lines.find(l => l.id === lineId)) {
-              lines.push({
-                id: lineId,
-                x1: item.position.x + 80,
-                y1: item.position.y + 100,
-                x2: target.position.x + 80,
-                y2: target.position.y + 100
-              });
-            }
+            if (!lines.find(l => l.id === lineId))
+              lines.push({ id: lineId, x1: item.position.x + 80, y1: item.position.y + 100, x2: target.position.x + 80, y2: target.position.y + 100 });
           }
         });
       }
@@ -666,7 +1357,7 @@ export default function App() {
     return lines;
   }, [items]);
 
-  // Mouse light effect
+  // Mouse light
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       document.documentElement.style.setProperty('--mouse-x', `${(e.clientX / window.innerWidth) * 100}%`);
@@ -676,48 +1367,85 @@ export default function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  return (
-    <div ref={viewportRef} className={`relative w-full h-screen desk-surface overflow-hidden ${isPathsMode ? 'paths-bg' : ''}`}>
+  // Workspace item
+  const workspaceItem = view.kind === 'workspace' ? items.find(i => i.id === view.itemId) : null;
 
-      {/* Entry screen — describe your world */}
+  // Section grid: compute neat grid positions for section items on the canvas
+  const CARD_WIDTHS: Record<string, number> = { character: 176, location: 256, event: 224, secret: 240, perspective: 208 };
+  const CARD_HEIGHTS: Record<string, number> = { character: 280, location: 200, event: 180, secret: 180, perspective: 180 };
+
+  const sectionGridPositions = useMemo(() => {
+    if (view.kind !== 'section') return {};
+    const sectionType = SECTION_TYPE_MAP[view.sectionId];
+    if (!sectionType) return {};
+    const sectionItems = items.filter(i => i.type === sectionType);
+    const cardW = CARD_WIDTHS[sectionType] || 200;
+    const cardH = CARD_HEIGHTS[sectionType] || 220;
+    const gap = 28;
+    const cols = Math.min(sectionItems.length, sectionType === 'character' ? 4 : 3);
+    const gap2 = gap;
+    // Grid positioned at canvas center area, leaving room for title above
+    const gridOriginX = -380;
+    const gridOriginY = -150;
+
+    const positions: Record<string, { x: number; y: number }> = {};
+    sectionItems.forEach((item, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      positions[item.id] = {
+        x: gridOriginX + col * (cardW + gap2),
+        y: gridOriginY + row * (cardH + gap2),
+      };
+    });
+    return positions;
+  }, [view, items]);
+
+  // Track previous view for back navigation
+  const previousViewRef = useRef<ViewState>({ kind: 'overview' });
+
+  // Navigate to section — rearrange cards into grid on canvas
+  const openSection = useCallback((sectionId: string) => {
+    setView({ kind: 'section', sectionId });
+    // Pan camera to frame the grid
+    panTo(-50, 50, 0.85);
+  }, [panTo]);
+
+  // Open item in workspace (from canvas or section grid)
+  const openWorkspace = useCallback((id: string) => {
+    previousViewRef.current = view;
+    setView({ kind: 'workspace', itemId: id });
+  }, [view]);
+
+  // Go back from workspace
+  const closeWorkspace = useCallback(() => {
+    const prev = previousViewRef.current;
+    // Return to section (camera stays) or overview
+    if (prev.kind === 'section') setView(prev);
+    else setView({ kind: 'overview' });
+  }, []);
+
+  // Create menu state
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* ===== Entry Screen (full viewport, above everything) ===== */}
       <AnimatePresence>
         {!hasEntered && (
-          <motion.div
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: EASE_OUT_EXPO }}
-            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center select-none"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: EASE_OUT_QUART, delay: 0.3 }}
-              className="flex flex-col items-center"
-            >
+          <motion.div exit={{ opacity: 0 }} transition={{ duration: 1.2, ease: EASE_OUT_EXPO }}
+            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center select-none">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: EASE_OUT_QUART, delay: 0.3 }} className="flex flex-col items-center">
               <p className="text-white/40 font-mono text-[11px] tracking-[0.3em] mb-8">D E S C R I B E &nbsp; Y O U R &nbsp; W O R L D</p>
-              <input
-                type="text"
-                value={worldInput}
-                onChange={e => setWorldInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleEnter(); }}
-                autoFocus
+              <input type="text" value={worldInput} onChange={e => setWorldInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleEnter(); }} autoFocus
                 className="bg-transparent border-b border-white/15 focus:border-white/40 text-white/80 font-serif text-4xl md:text-5xl tracking-wide text-center pb-3 w-[400px] md:w-[500px] outline-none transition-colors duration-300 placeholder:text-white/10"
-                placeholder="Stranger Things"
-              />
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 1.2 }}
-                className="mt-3 text-white/10 font-mono text-[10px] tracking-[0.2em]"
-              >
-                W O R L D &nbsp; C O M P E N D I U M
-              </motion.p>
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 1.5 }}
+                placeholder="Stranger Things" />
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.2 }}
+                className="mt-3 text-white/10 font-mono text-[10px] tracking-[0.2em]">W O R L D &nbsp; C O M P E N D I U M</motion.p>
+              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.5 }}
                 onClick={handleEnter}
-                className="mt-12 px-8 py-2.5 border border-white/10 hover:border-white/30 text-white/25 hover:text-white/60 text-[11px] font-mono tracking-[0.3em] rounded-full transition-all duration-300 hover:bg-white/5"
-              >
+                className="mt-12 px-8 py-2.5 border border-white/10 hover:border-white/30 text-white/25 hover:text-white/60 text-[11px] font-mono tracking-[0.3em] rounded-full transition-all duration-300 hover:bg-white/5">
                 E N T E R
               </motion.button>
             </motion.div>
@@ -725,431 +1453,259 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Black overlay */}
-      {hasEntered && <div className="absolute inset-0 bg-black z-[90] pointer-events-none opening-overlay" />}
+      {/* ===== Canvas (always rendered, full screen) ===== */}
+      <div ref={viewportRef} className={`relative w-full h-full desk-surface overflow-hidden ${isPathsMode ? 'paths-bg' : ''}`}>
 
-      {/* --- Top Bar (free mode) --- */}
-      <AnimatePresence>
-        {isFree && (
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.2 }}
-            className="fixed top-6 left-6 right-6 flex items-center justify-between pointer-events-none z-[70]"
-          >
-            <div className="flex items-center gap-4 pointer-events-auto">
-              <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-red-500 transition-colors duration-200" />
-                <input
-                  type="text"
-                  placeholder="Search Archive..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-black/60 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs text-white w-64 focus:outline-none focus:border-red-600/50 backdrop-blur-md transition-colors duration-200"
-                />
+        {/* Black overlay (narrative opening) */}
+        {hasEntered && <div className="absolute inset-0 bg-black z-[90] pointer-events-none opening-overlay" />}
+
+        {/* Top Bar (free mode, overview only) */}
+        <AnimatePresence>
+          {isFree && view.kind !== 'workspace' && (
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.2 }}
+              className="fixed top-6 left-6 right-6 flex items-center justify-between pointer-events-none z-[70]">
+              <div className="flex items-center gap-4 pointer-events-auto">
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-red-500 transition-colors duration-200" />
+                  <input type="text" placeholder="Search Archive..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                    className="bg-black/60 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs text-white w-64 focus:outline-none focus:border-red-600/50 backdrop-blur-md transition-colors duration-200" />
+                </div>
+                <button onClick={resetView} className="p-2 bg-black/60 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/30 backdrop-blur-md transition-colors duration-200" title="Reset View">
+                  <Navigation2 className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={resetView}
-                className="p-2 bg-black/60 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/30 backdrop-blur-md transition-colors duration-200"
-                title="Reset View"
-              >
-                <Navigation2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-6 pointer-events-auto">
-              <div className="flex flex-col items-end font-mono text-[10px] text-white/40 uppercase tracking-widest">
-                <span>Items: {filteredItems.length}</span>
+              <div className="flex items-center gap-6 pointer-events-auto">
+                <div className="flex flex-col items-end font-mono text-[10px] text-white/40 uppercase tracking-widest">
+                  <span>Items: {filteredItems.length}</span>
+                </div>
+                <button onClick={() => setIsPathsMode(!isPathsMode)}
+                  className={`px-4 py-2 rounded-full border flex items-center gap-2 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-colors duration-300 ${
+                    isPathsMode ? 'bg-blue-600/20 border-blue-500 text-blue-400 paths-glow' : 'bg-black/60 border-white/10 text-white/60 hover:border-white/30'
+                  }`}>
+                  <Zap className={`w-3 h-3 ${isPathsMode ? 'animate-pulse' : ''}`} />Paths Mode
+                </button>
               </div>
-              <button
-                onClick={() => setIsPathsMode(!isPathsMode)}
-                className={`px-4 py-2 rounded-full border flex items-center gap-2 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-colors duration-300
-                  ${isPathsMode
-                    ? 'bg-blue-600/20 border-blue-500 text-blue-400 paths-glow'
-                    : 'bg-black/60 border-white/10 text-white/60 hover:border-white/30'
-                  }`}
-              >
-                <Zap className={`w-3 h-3 ${isPathsMode ? 'animate-pulse' : ''}`} />
-                Paths Mode
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* --- Table of Contents (free mode) --- */}
-      <AnimatePresence>
-        {isFree && (
-          <motion.div
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.4 }}
-            className="fixed left-6 top-1/2 -translate-y-1/2 z-[70]"
-          >
-            <TableOfContents
-              sections={NARRATIVE_SECTIONS.filter(s => s.cardIds.length > 0)}
-              items={items}
-              onSectionClick={(section) => jumpTo(section.camera.x, section.camera.y, section.camera.zoom)}
-              onCardClick={(item) => jumpTo(item.position.x, item.position.y, 0.9)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Floating Navigation (free mode — always visible) */}
+        <AnimatePresence>
+          {isFree && (
+            <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.4 }}
+              className={`fixed z-[88] ${
+                view.kind === 'workspace'
+                  ? 'left-0 top-0 bottom-0 w-[180px] flex flex-col justify-center pl-4 pr-2'
+                  : 'left-6 top-1/2 -translate-y-1/2'
+              }`}>
+              <TableOfContents sections={NARRATIVE_SECTIONS.filter(s => s.cardIds.length > 0)} items={items}
+                activeView={view}
+                variant={view.kind === 'workspace' ? 'flat' : 'floating'}
+                onSectionClick={section => openSection(section.id)}
+                onCardClick={item => openWorkspace(item.id)}
+                onOverview={() => { setView({ kind: 'overview' }); panTo(-50, -200, 0.45); }}
+                onCreateNew={() => setShowCreateMenu(!showCreateMenu)} />
 
-      {/* --- Zoom Controls + Minimap (free mode) --- */}
-      <AnimatePresence>
-        {isFree && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.3 }}
-            className="fixed bottom-6 right-6 flex flex-col items-end gap-4 z-[70]"
-          >
-            <Minimap
-              items={filteredItems}
-              viewportSize={viewportSize}
-              deskX={deskX}
-              deskY={deskY}
-              zoom={zoom}
-              onNavigate={(nx, ny) => jumpTo(nx, ny, zoom.get())}
-            />
-            <div className="flex items-center gap-4">
+              {/* Create Menu Popup */}
+              <AnimatePresence>
+                {showCreateMenu && (
+                  <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }} transition={{ duration: 0.2, ease: EASE_OUT_QUART }}
+                    className="mt-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-2 pointer-events-auto">
+                    <p className="px-2 py-1 text-[10px] font-mono text-white/20 uppercase tracking-[0.15em]">Document</p>
+                    {(['character', 'location', 'event', 'story', 'perspective'] as const).map(t => (
+                      <button key={t} onClick={() => { createNewItem('document', t); setShowCreateMenu(false); }}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[12px] text-white/45 hover:text-white/70 hover:bg-white/[0.04] transition-colors duration-150">
+                        <div className="w-2 h-2 rounded-full" style={{ background: TYPE_COLORS[t] || '#888' }} />
+                        <span>{t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Zoom (free mode, overview only) */}
+        <AnimatePresence>
+          {isFree && view.kind !== 'workspace' && (
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.3 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-[70]">
               <ControlButton onClick={() => zoom.set(Math.min(zoom.get() + 0.1, 1.5))} icon={<ZoomIn size={18} />} label="Zoom In" />
               <ControlButton onClick={() => zoom.set(Math.max(zoom.get() - 0.1, 0.5))} icon={<ZoomOut size={18} />} label="Zoom Out" />
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* BGM Mute */}
+        {hasEntered && (
+          <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 2.5 }}
+            onClick={toggleMute}
+            className="fixed bottom-8 left-8 z-[95] p-2 text-white/20 hover:text-white/50 transition-colors duration-200"
+            title={isMuted ? 'Unmute' : 'Mute'}>
+            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </motion.button>
+        )}
+
+        {/* Infinite Desk Surface */}
+        <motion.div drag={isFree && view.kind !== 'workspace'} dragMomentum={false}
+          style={{ x: springX, y: springY, scale: springZoom }}
+          className={`absolute inset-0 flex items-center justify-center ${isFree && view.kind !== 'workspace' ? 'cursor-move active:cursor-grabbing' : ''}`}>
+          <div className="relative w-[2000px] h-[1800px] flex items-center justify-center">
+            <div className="absolute inset-0 opacity-5 pointer-events-none"
+              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '100px 100px' }} />
+
+            {/* Section headers — hide in section grid mode */}
+            {NARRATIVE_SECTIONS.map((section, i) => {
+              const inSectionMode = view.kind === 'section';
+              return (
+                <SectionHeader key={section.id} section={section} state={sectionStates[i] || 'hidden'}
+                  isInstant={isFree} isDimmed={inSectionMode || (!isFree && i < activeSectionIndex)}
+                  displayTitle={section.id === 'title' ? worldName : undefined} onTypewriterDone={onTypewriterComplete}
+                  onSectionClick={section.cardIds.length > 0 ? () => openSection(section.id) : undefined} />
+              );
+            })}
+
+            {/* (Section title is rendered as a fixed overlay below) */}
+
+            {/* Quotes — hide in section mode */}
+            {Object.entries(QUOTES).map(([cardId, text]) => {
+              if (!visibleQuotes.has(cardId)) return null;
+              if (view.kind === 'section') return null;
+              const card = items.find(i => i.id === cardId);
+              if (!card) return null;
+              return <CharacterQuote key={`quote-${cardId}`} cardId={cardId} text={text} position={card.position}
+                isInstant={isFree} isDimmed={!isFree && (cardSectionMap[cardId] ?? -1) < activeSectionIndex} />;
+            })}
+
+            <AnimatePresence>
+              {isPathsMode && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                  {connectionLines.map(line => (
+                    <motion.line key={line.id} initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 0.3 }} exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: EASE_OUT_QUART }}
+                      x1={line.x1 + 1000} y1={line.y1 + 1000} x2={line.x2 + 1000} y2={line.y2 + 1000}
+                      stroke="#3b82f6" strokeWidth="2" strokeDasharray="5,5" />
+                  ))}
+                </svg>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {filteredItems.map((item) => {
+                const inSection = view.kind === 'section';
+                const sectionType = inSection ? SECTION_TYPE_MAP[(view as { sectionId: string }).sectionId] : null;
+                const isInActiveSection = inSection && item.type === sectionType;
+                const gridPos = sectionGridPositions[item.id];
+                // In section mode: dim items not in this section
+                const dimmed = !isFree
+                  ? (cardSectionMap[item.id] ?? -1) < activeSectionIndex
+                  : inSection && !isInActiveSection;
+                return (
+                  <ArchiveCard key={item.id} item={item} isPaths={isPathsMode}
+                    onClick={() => openWorkspace(item.id)}
+                    onPositionChange={handlePositionChange}
+                    isDraggable={isFree && view.kind !== 'workspace'}
+                    isDimmed={dimmed}
+                    overridePosition={gridPos}
+                    isGridMode={!!gridPos} />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Section Title (fixed overlay, top-left — shown in section mode) */}
+        <AnimatePresence>
+          {isFree && view.kind === 'section' && (() => {
+            const sec = NARRATIVE_SECTIONS.find(s => s.id === (view as { sectionId: string }).sectionId);
+            if (!sec) return null;
+            const sType = SECTION_TYPE_MAP[(view as { sectionId: string }).sectionId];
+            const count = sType ? items.filter(i => i.type === sType).length : 0;
+            return (
+              <motion.div
+                key="section-title"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: EASE_OUT_QUART }}
+                className="fixed top-16 left-[200px] z-[70] pointer-events-none"
+              >
+                <h2 className={`font-serif text-3xl font-bold tracking-tight ${sec.titleClass || 'text-white/80'}`}>
+                  {sec.title}
+                </h2>
+                <p className="text-[11px] text-white/25 font-mono mt-1">{count} items</p>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
+
+        {/* Status Bar (free mode) */}
+        <AnimatePresence>
+          {isFree && view.kind !== 'workspace' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.4 }}
+              className="fixed bottom-6 left-8 z-[60] flex items-center gap-4 text-[10px] font-mono text-white/30">
+              <div className="flex items-center gap-2"><Move size={12} /><span>Drag to navigate</span></div>
+              <div className="w-px h-3 bg-white/10" />
+              <span>ITEMS: {filteredItems.length}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ===== Workspace — persistent backdrop + swappable content ===== */}
+      <AnimatePresence>
+        {workspaceItem && (
+          <motion.div
+            key="workspace-backdrop"
+            initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.25 } }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            className="fixed inset-0 z-[85] bg-[#0a0a0a]"
+          >
+            {workspaceItem.kind === 'document' ? (
+              <DocumentWorkspace key={workspaceItem.id} item={workspaceItem} items={items}
+                onClose={closeWorkspace}
+                onUpdate={updateItem}
+                onNavigateItem={(id) => setView({ kind: 'workspace', itemId: id })} />
+            ) : (
+              <AssetWorkspace key={workspaceItem.id} item={workspaceItem}
+                onClose={closeWorkspace}
+                onUpdate={updateItem} />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* --- Skip Button (narrating) --- */}
+      {/* ===== Skip Button (bottom-left, next to mute) ===== */}
       <AnimatePresence>
         {!isFree && hasEntered && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.2 } }}
-            transition={{ duration: 0.4, delay: 2 }}
+          <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.4, delay: 2 }}
             onClick={skipNarrative}
-            className="fixed bottom-8 right-8 z-[95] flex items-center gap-2 text-white/20 hover:text-white/50 text-xs font-mono uppercase tracking-widest transition-colors duration-200"
-          >
-            <span>Skip</span>
-            <SkipForward size={14} />
+            className="fixed bottom-8 left-16 z-[95] flex items-center gap-2 text-white/25 hover:text-white/60 text-xs font-mono uppercase tracking-widest transition-colors duration-200">
+            <span>Skip</span><SkipForward size={14} />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* --- BGM Mute Toggle --- */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 2.5 }}
-        onClick={toggleMute}
-        className="fixed bottom-8 left-8 z-[95] p-2 text-white/20 hover:text-white/50 transition-colors duration-200"
-        title={isMuted ? 'Unmute' : 'Mute'}
-      >
-        {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-      </motion.button>
-
-      {/* --- Infinite Desk Surface --- */}
-      <motion.div
-        drag={isFree}
-        dragMomentum={false}
-        style={{ x: springX, y: springY, scale: springZoom }}
-        className={`absolute inset-0 flex items-center justify-center ${isFree ? 'cursor-move active:cursor-grabbing' : ''}`}
-      >
-        <div className="relative w-[2600px] h-[2200px] flex items-center justify-center">
-
-          {/* Grid Guide */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none"
-            style={{
-              backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-              backgroundSize: '100px 100px'
-            }}
+      {/* ===== Unified World Agent Panel (always present after entering) ===== */}
+      <AnimatePresence>
+        {hasEntered && (
+          <WorldAgentPanel
+            worldName={worldName}
+            phase={narrativePhase}
+            activeSectionIndex={activeSectionIndex}
+            isExpanded={isAgentExpanded}
+            onToggleExpand={() => setIsAgentExpanded(prev => !prev)}
           />
-
-          {/* Section Headers */}
-          {NARRATIVE_SECTIONS.map((section, i) => (
-            <SectionHeader
-              key={section.id}
-              section={section}
-              state={sectionStates[i] || 'hidden'}
-              isInstant={isFree}
-              isDimmed={!isFree && i < activeSectionIndex}
-              displayTitle={section.id === 'title' ? worldName : undefined}
-              onTypewriterDone={onTypewriterComplete}
-            />
-          ))}
-
-          {/* Character Quotes */}
-          {Object.entries(QUOTES).map(([cardId, text]) => {
-            if (!visibleQuotes.has(cardId)) return null;
-            const card = items.find(i => i.id === cardId);
-            if (!card) return null;
-            return (
-              <CharacterQuote
-                key={`quote-${cardId}`}
-                cardId={cardId}
-                text={text}
-                position={card.position}
-                isInstant={isFree}
-                isDimmed={!isFree && (cardSectionMap[cardId] ?? -1) < activeSectionIndex}
-              />
-            );
-          })}
-
-          {/* Paths Connections */}
-          <AnimatePresence>
-            {isPathsMode && (
-              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                {connectionLines.map(line => (
-                  <motion.line
-                    key={line.id}
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 0.3 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8, ease: EASE_OUT_QUART }}
-                    x1={line.x1 + 1000}
-                    y1={line.y1 + 1000}
-                    x2={line.x2 + 1000}
-                    y2={line.y2 + 1000}
-                    stroke="#3b82f6"
-                    strokeWidth="2"
-                    strokeDasharray="5,5"
-                  />
-                ))}
-              </svg>
-            )}
-          </AnimatePresence>
-
-          {/* Archive Cards */}
-          <AnimatePresence>
-            {filteredItems.map((item) => (
-              <ArchiveCard
-                key={item.id}
-                item={item}
-                isPaths={isPathsMode}
-                onClick={() => setSelectedItem(item)}
-                onPositionChange={handlePositionChange}
-                isDraggable={isFree}
-                isDimmed={!isFree && (cardSectionMap[item.id] ?? -1) < activeSectionIndex}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-
-      {/* Status Bar (free mode) */}
-      <AnimatePresence>
-        {isFree && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="fixed bottom-6 left-8 z-[60] flex items-center gap-4 text-[10px] font-mono text-white/30"
-          >
-            <div className="flex items-center gap-2">
-              <Move size={12} />
-              <span>Drag to navigate</span>
-            </div>
-            <div className="w-px h-3 bg-white/10" />
-            <span>ITEMS: {filteredItems.length}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- Detail Modal --- */}
-      <AnimatePresence>
-        {selectedItem && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: EASE_OUT_QUART }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg"
-            onClick={() => setSelectedItem(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.94, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.96, opacity: 0, y: 8, transition: { duration: 0.18 } }}
-              transition={{ duration: 0.35, ease: EASE_OUT_QUART }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-4xl paper-sheet p-0 overflow-hidden rounded-sm shadow-2xl flex flex-col md:flex-row"
-            >
-              <div className="w-full md:w-5/12 h-80 md:h-auto relative bg-black">
-                {selectedItem.image ? (
-                  <img src={selectedItem.image} className="w-full h-full object-cover grayscale opacity-80" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/10">
-                    <Skull size={100} />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-titan-red/10 mix-blend-multiply" />
-              </div>
-              <div className="flex-1 p-12 relative bg-[#e4e3e0]">
-                <button onClick={() => setSelectedItem(null)} className="absolute top-6 right-6 p-2 text-black/30 hover:text-black transition-colors duration-200">
-                  <CloseIcon size={24} />
-                </button>
-
-                <div className="mb-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-mono bg-titan-red text-white px-2 py-0.5 uppercase tracking-widest">
-                      {selectedItem.type}
-                    </span>
-                    <span className="text-[10px] font-mono opacity-40">ID: {selectedItem.id}</span>
-                  </div>
-                  <h2 className="text-5xl font-serif font-bold tracking-tighter">{selectedItem.title}</h2>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="prose prose-invert max-w-none prose-p:text-gray-300 prose-p:leading-relaxed prose-strong:text-red-400">
-                    <Markdown>{selectedItem.content}</Markdown>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedItem.metadata && Object.entries(selectedItem.metadata).map(([key, value]) => (
-                      <div key={key} className="border-l border-black/10 pl-4">
-                        <h4 className="text-[9px] font-mono uppercase tracking-widest opacity-40 mb-1">{key}</h4>
-                        <p className="text-xs font-bold">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-12 pt-8 border-t border-black/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 opacity-30">
-                    <Skull size={14} />
-                    <span className="text-[10px] font-mono uppercase">Verified by Archive System</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-// --- Helper Components ---
-
-function ControlButton({ active, onClick, icon, label, color = 'red' }: { active?: boolean, onClick: () => void, icon: React.ReactNode, label: string, color?: 'red' | 'blue' }) {
-  const activeClass = color === 'blue'
-    ? 'bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.5)]'
-    : 'bg-titan-red text-white shadow-[0_0_20px_rgba(136,8,8,0.5)]';
-
-  return (
-    <div className="group flex items-center gap-3">
-      <button
-        onClick={onClick}
-        className={`p-3 rounded-full transition-colors duration-200 ${active ? activeClass : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'}`}
-      >
-        {icon}
-      </button>
-      <span className={`text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap ${active ? 'text-white' : 'text-white/40'}`}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function Typewriter({ text, speed = 30, onComplete }: { text: string, speed?: number, onComplete?: () => void }) {
-  const [displayedText, setDisplayedText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const isDone = currentIndex >= text.length;
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
-      }, speed);
-      return () => clearTimeout(timeout);
-    } else if (onCompleteRef.current) {
-      onCompleteRef.current();
-    }
-  }, [currentIndex, text, speed]);
-
-  return (
-    <span className={isDone ? '' : 'cursor-blink'}>
-      {displayedText}
-    </span>
-  );
-}
-
-function TableOfContents({
-  sections,
-  items,
-  onSectionClick,
-  onCardClick,
-}: {
-  sections: NarrativeSection[];
-  items: ArchiveItem[];
-  onSectionClick: (section: NarrativeSection) => void;
-  onCardClick: (item: ArchiveItem) => void;
-}) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const handleSectionClick = (section: NarrativeSection) => {
-    if (expandedId === section.id) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(section.id);
-      onSectionClick(section);
-    }
-  };
-
-  return (
-    <nav className="pointer-events-auto select-none bg-black/40 backdrop-blur-md border border-white/5 rounded-lg px-3 py-2">
-      <ul className="flex flex-col gap-0.5">
-        {sections.map((section) => {
-          const isOpen = expandedId === section.id;
-          const sectionItems = section.cardIds
-            .map(id => items.find(i => i.id === id))
-            .filter(Boolean) as ArchiveItem[];
-
-          return (
-            <li key={section.id}>
-              <button
-                onClick={() => handleSectionClick(section)}
-                className={`flex items-center gap-2 py-1.5 px-1 text-left transition-colors duration-200 group ${
-                  isOpen ? 'text-white/80' : 'text-white/30 hover:text-white/60'
-                }`}
-              >
-                <span className={`w-3 text-[8px] font-mono transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>
-                  ›
-                </span>
-                <span className="font-serif text-sm tracking-wide">{section.title}</span>
-              </button>
-
-              <AnimatePresence>
-                {isOpen && sectionItems.length > 0 && (
-                  <motion.ul
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: EASE_OUT_QUART }}
-                    className="overflow-hidden"
-                  >
-                    {sectionItems.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          onClick={() => onCardClick(item)}
-                          className="w-full text-left pl-6 pr-2 py-1 text-[11px] text-white/25 hover:text-white/50 transition-colors duration-200 truncate font-mono"
-                        >
-                          {item.title}
-                        </button>
-                      </li>
-                    ))}
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
   );
 }
