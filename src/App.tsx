@@ -55,86 +55,77 @@ interface NarrativeSection {
 }
 
 const NARRATIVE_SECTIONS: NarrativeSection[] = [
-  // --- Act 0: Title card ---
   {
     id: 'title',
-    title: '进击的巨人',
-    text: '世界卷宗',
+    title: 'Stranger Things',
+    text: 'World Compendium',
     position: { x: -350, y: -780 },
     camera: { x: -100, y: -730, zoom: 1 },
     cardIds: [],
     titleClass: 'text-white !text-7xl !tracking-wide',
     textClass: 'text-base text-white/40 font-mono tracking-[0.3em]',
   },
-  // --- Act 1: Prologue ---
   {
     id: 'prologue',
     title: '',
-    text: '三重城墙围起了人类最后的领土。\n墙外是巨人——没有理智、没有目的，只会吃人。\n墙内的人类已经忘记了外面的世界。\n\n一百年的和平让大多数人相信，\n城墙就是世界的边界。',
+    text: 'Hawkins, Indiana. A small town where nothing happens.\nUntil a boy disappears, a girl appears,\nand the fabric between worlds tears open.\n\nBeneath the surface, a shadow dimension mirrors our own.\nCold. Dark. Alive.',
     position: { x: -350, y: -600 },
     camera: { x: -100, y: -550, zoom: 1 },
     cardIds: [],
     textClass: 'text-lg text-white/70 font-serif leading-loose',
   },
-  // ===== Row 1: 2 clusters =====
-  // --- Act 2: Characters (left) ---
   {
     id: 'characters',
-    title: '他们',
-    text: '记住这些面孔。\n他们中的每一个人，都将做出不可挽回的选择。',
+    title: 'The Party',
+    text: 'Remember these faces.\nEach of them will be marked by the Upside Down — and none will escape unchanged.',
     position: { x: -580, y: -300 },
     camera: { x: -380, y: -80, zoom: 0.9 },
-    cardIds: ['eren', 'mikasa', 'armin', 'levi', 'reiner', 'zeke'],
+    cardIds: ['eleven', 'mike', 'will', 'hopper', 'dustin', 'steve'],
     quotes: {
-      'eren': '"如果杀光那边的敌人，我们就能自由了吗？"',
-      'mikasa': '"我只想待在你身边。"',
-      'armin': '"我想看到外面的世界。"',
+      'eleven': '"Friends don\'t lie."',
+      'mike': '"She\'s our friend and she\'s crazy!"',
+      'will': '"It\'s like home... but it\'s so dark."',
     },
   },
-  // --- Act 3: Locations (right) ---
   {
     id: 'locations',
-    title: '舞台',
-    text: '这些是他们战斗过的地方。\n每一块石头都浸透了血。',
+    title: 'The Map',
+    text: 'These are the places where the membrane is thinnest.\nWhere the darkness bleeds through.',
     position: { x: 380, y: -300 },
     camera: { x: 520, y: -80, zoom: 1 },
-    cardIds: ['shiganshina', 'ocean', 'liberio'],
+    cardIds: ['hawkins', 'upside_down', 'lab'],
   },
-  // ===== Row 2: 3 clusters =====
-  // --- Act 4: Events (left) ---
   {
     id: 'events',
-    title: '转折',
-    text: '845年，城墙碎了。\n不只是石头碎了——\n是所有人以为的世界碎了。',
+    title: 'Turning Points',
+    text: 'November 1983. A boy vanishes.\nA gate opens. The world cracks.\nAnd nothing in Hawkins is ever the same.',
     position: { x: -680, y: 350 },
     camera: { x: -530, y: 520, zoom: 1 },
-    cardIds: ['basement', 'trost', 'rumbling'],
+    cardIds: ['disappearance', 'starcourt', 'vecna_curse'],
   },
-  // --- Act 5: Secrets (center) ---
   {
     id: 'secrets',
-    title: '真相',
-    text: '以下内容已被始祖之力封印。\n你正在阅读不应存在的记录。',
+    title: 'Classified',
+    text: 'The following files were sealed by the Department of Energy.\nYou are reading records that should not exist.',
     position: { x: -100, y: 350 },
     camera: { x: 50, y: 520, zoom: 1.05 },
-    cardIds: ['ymir_origin', 'ackerman'],
+    cardIds: ['vecna', 'brenner'],
     textClass: 'text-sm text-red-400/60 leading-relaxed',
   },
-  // --- Act 6: Perspectives (right) ---
   {
     id: 'perspectives',
-    title: '回响',
-    text: '当所有的事实摆在面前，你会发现——\n没有人是反派。\n这才是最恐怖的。',
+    title: 'Echoes',
+    text: 'When all the facts are laid bare, you realize —\nthe real monster was never in the Upside Down.\nIt was always about growing up.',
     position: { x: 500, y: 350 },
     camera: { x: 620, y: 520, zoom: 1.05 },
-    cardIds: ['erwin_speech', 'freedom_cost'],
+    cardIds: ['hopper_letter', 'growing_up'],
   },
 ];
 
 const QUOTES: Record<string, string> = {
-  'eren': '"如果杀光那边的敌人，我们就能自由了吗？"',
-  'mikasa': '"我只想待在你身边。"',
-  'armin': '"我想看到外面的世界。"',
+  'eleven': '"Friends don\'t lie."',
+  'mike': '"She\'s our friend and she\'s crazy!"',
+  'will': '"It\'s like home... but it\'s so dark."',
 };
 
 // --- Components ---
@@ -144,17 +135,20 @@ function SectionHeader({
   state,
   isInstant,
   isDimmed,
+  displayTitle,
   onTypewriterDone
 }: {
   section: NarrativeSection;
   state: 'hidden' | 'title' | 'text' | 'complete';
   isInstant: boolean;
   isDimmed: boolean;
+  displayTitle?: string;
   onTypewriterDone?: () => void;
 }) {
   if (state === 'hidden') return null;
 
-  const showTitle = !!section.title;
+  const titleText = displayTitle || section.title;
+  const showTitle = !!titleText;
   const showText = state === 'text' || state === 'complete';
 
   return (
@@ -173,8 +167,8 @@ function SectionHeader({
         {showTitle && (
           <h2 className={`font-serif text-5xl font-bold mb-5 tracking-tight ${section.titleClass || 'text-white/80'}`}>
             {isInstant
-              ? section.title
-              : <Typewriter text={section.title} speed={100} onComplete={state === 'title' ? onTypewriterDone : undefined} />
+              ? titleText
+              : <Typewriter text={titleText} speed={100} onComplete={state === 'title' ? onTypewriterDone : undefined} />
             }
           </h2>
         )}
@@ -302,7 +296,7 @@ const ArchiveCard = ({
           <>
             <div className="flex items-center gap-2 mb-2 border-b border-blue-300/20 pb-1">
               <MapIcon size={12} />
-              <span className="text-[10px] font-bold uppercase tracking-tighter">地理标本: {item.title}</span>
+              <span className="text-[10px] font-bold uppercase tracking-tighter">Geo Specimen: {item.title}</span>
             </div>
             {item.image && <img src={item.image} className="w-full h-24 object-cover opacity-60 mb-2 grayscale" referrerPolicy="no-referrer" />}
             <div className="text-[10px] leading-tight opacity-80 prose prose-invert max-w-none">
@@ -329,7 +323,7 @@ const ArchiveCard = ({
             </div>
             <h4 className="font-serif font-bold text-xs mb-1">{item.title}</h4>
             <div className="h-1 w-full bg-black/10 mb-2" />
-            <p className="text-[10px] leading-tight opacity-60">点击解密核心数据...</p>
+            <p className="text-[10px] leading-tight opacity-60">Click to decrypt classified data...</p>
           </>
         )}
 
@@ -338,7 +332,7 @@ const ArchiveCard = ({
             <div className="text-[11px] leading-relaxed italic text-black/70 prose prose-invert max-w-none">
               <Markdown>{`"${item.content.substring(0, 100)}..."`}</Markdown>
             </div>
-            <div className="mt-3 text-[9px] font-bold text-titan-red/50">— {item.metadata?.author || '穿过者'}</div>
+            <div className="mt-3 text-[9px] font-bold text-titan-red/50">— {item.metadata?.author || 'Unknown'}</div>
           </>
         )}
       </motion.div>
@@ -346,78 +340,79 @@ const ArchiveCard = ({
   );
 };
 
-const Minimap = ({
+// --- Minimap ---
+
+function Minimap({
   items,
+  viewportSize,
   deskX,
   deskY,
   zoom,
-  viewportSize
+  onNavigate
 }: {
   items: ArchiveItem[];
-  deskX: any;
-  deskY: any;
-  zoom: any;
   viewportSize: { width: number; height: number };
-}) => {
-  const mapSize = 160;
-  const deskSize = 2600;
-  const scale = mapSize / deskSize;
+  deskX: ReturnType<typeof useMotionValue>;
+  deskY: ReturnType<typeof useMotionValue>;
+  zoom: ReturnType<typeof useMotionValue>;
+  onNavigate: (x: number, y: number) => void;
+}) {
+  const WORLD_W = 2600;
+  const WORLD_H = 2200;
+  const MAP_W = 160;
+  const MAP_H = (WORLD_H / WORLD_W) * MAP_W;
+  const scale = MAP_W / WORLD_W;
 
-  const viewX = useTransform(deskX, (v: number) => (deskSize/2 - v / zoom.get() - viewportSize.width / (2 * zoom.get())) * scale);
-  const viewY = useTransform(deskY, (v: number) => (deskSize/2 - v / zoom.get() - viewportSize.height / (2 * zoom.get())) * scale);
-  const viewW = useTransform(zoom, (v: number) => (viewportSize.width / v) * scale);
-  const viewH = useTransform(zoom, (v: number) => (viewportSize.height / v) * scale);
+  const typeColors: Record<ArchiveType, string> = {
+    character: '#3b82f6',
+    location: '#22c55e',
+    event: '#eab308',
+    secret: '#ef4444',
+    perspective: '#a855f7',
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / scale - WORLD_W / 2;
+    const clickY = (e.clientY - rect.top) / scale - WORLD_H / 2;
+    onNavigate(clickX, clickY);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: EASE_OUT_QUART, delay: 0.6 }}
-      className="fixed bottom-20 right-6 w-40 h-40 bg-black/60 border border-white/20 backdrop-blur-md rounded-lg overflow-hidden z-50 pointer-events-none shadow-2xl"
+    <div
+      className="bg-black/60 border border-white/10 rounded-lg backdrop-blur-md cursor-crosshair overflow-hidden"
+      style={{ width: MAP_W, height: MAP_H }}
+      onClick={handleClick}
     >
-      <div className="absolute inset-0 opacity-20" style={{
-        backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-        backgroundSize: '10px 10px'
-      }} />
-
-      {items.map(item => (
-        <div
-          key={item.id}
-          className={`absolute w-1 h-1 rounded-full ${
-            item.type === 'character' ? 'bg-blue-400' :
-            item.type === 'location' ? 'bg-green-400' :
-            item.type === 'event' ? 'bg-yellow-400' :
-            item.type === 'secret' ? 'bg-red-400' : 'bg-white'
-          }`}
-          style={{
-            left: (item.position.x + deskSize/2) * scale,
-            top: (item.position.y + deskSize/2) * scale
-          }}
-        />
-      ))}
-
-      <motion.div
-        className="absolute border border-white/50 bg-white/5"
-        style={{ x: viewX, y: viewY, width: viewW, height: viewH }}
-      />
-
-      <div className="absolute top-1 left-1 text-[8px] uppercase tracking-tighter opacity-50 font-mono">Archive Map</div>
-    </motion.div>
+      <svg width={MAP_W} height={MAP_H}>
+        {items.map(item => (
+          <circle
+            key={item.id}
+            cx={(item.position.x + WORLD_W / 2) * scale}
+            cy={(item.position.y + WORLD_H / 2) * scale}
+            r={2.5}
+            fill={typeColors[item.type]}
+            opacity={0.7}
+          />
+        ))}
+      </svg>
+    </div>
   );
-};
+}
 
 // --- Main App ---
 
 export default function App() {
   // Narrative state
   const [hasEntered, setHasEntered] = useState(false);
+  const [worldInput, setWorldInput] = useState('');
+  const [worldName, setWorldName] = useState('Stranger Things');
   const [narrativePhase, setNarrativePhase] = useState<'narrating' | 'free'>('narrating');
   const [sectionStates, setSectionStates] = useState<Record<number, 'hidden' | 'title' | 'text' | 'complete'>>({});
   const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
   const [visibleQuotes, setVisibleQuotes] = useState<Set<string>>(new Set());
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const cancelRef = useRef(false);
-  // Refs for typewriter completion signals
   const typewriterResolveRef = useRef<(() => void) | null>(null);
 
   // Background music
@@ -433,9 +428,10 @@ export default function App() {
   }, []);
 
   const handleEnter = useCallback(() => {
+    if (worldInput.trim()) setWorldName(worldInput.trim());
     setHasEntered(true);
     audioRef.current?.play();
-  }, []);
+  }, [worldInput]);
 
   // Fade out BGM when narrative completes
   useEffect(() => {
@@ -443,7 +439,7 @@ export default function App() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const fadeDuration = 4000; // 4 seconds
+    const fadeDuration = 4000;
     const steps = 40;
     const interval = fadeDuration / steps;
     const startVolume = audio.volume;
@@ -479,7 +475,6 @@ export default function App() {
   const deskY = useMotionValue(0);
   const zoom = useMotionValue(1);
 
-  // Snappier spring for cinematic camera movement
   const cameraSpring = { damping: 32, stiffness: 160 };
   const springX = useSpring(deskX, cameraSpring);
   const springY = useSpring(deskY, cameraSpring);
@@ -504,7 +499,6 @@ export default function App() {
 
   const isFree = narrativePhase === 'free';
 
-  // Map card IDs to their section index for dimming
   const cardSectionMap = useMemo(() => {
     const map: Record<string, number> = {};
     NARRATIVE_SECTIONS.forEach((section, i) => {
@@ -546,7 +540,6 @@ export default function App() {
     zoom.set(0.6);
   };
 
-  // Wait for a typewriter to signal completion
   const waitForTypewriter = useCallback(() => {
     return new Promise<void>((resolve) => {
       typewriterResolveRef.current = resolve;
@@ -570,7 +563,6 @@ export default function App() {
     const done = () => cancelRef.current;
 
     (async () => {
-      // Initial pause — fade in from black
       await wait(1500);
       if (done()) return;
 
@@ -580,10 +572,11 @@ export default function App() {
         // Pan camera to section
         setActiveSectionIndex(i);
         panTo(section.camera.x, section.camera.y, section.camera.zoom);
+
         await wait(1200);
         if (done()) return;
 
-        // Show title (wait for typewriter to finish)
+        // Show title
         if (section.title) {
           setSectionStates(prev => ({ ...prev, [i]: 'title' }));
           await waitForTypewriter();
@@ -591,7 +584,7 @@ export default function App() {
           if (done()) return;
         }
 
-        // Show text (wait for typewriter to finish)
+        // Show text
         setSectionStates(prev => ({ ...prev, [i]: 'text' }));
         await waitForTypewriter();
         await wait(800);
@@ -602,7 +595,6 @@ export default function App() {
           const cardId = section.cardIds[j];
           setRevealedCards(prev => new Set([...prev, cardId]));
 
-          // Show quote after card lands
           if (section.quotes?.[cardId]) {
             await wait(500);
             if (done()) return;
@@ -613,15 +605,13 @@ export default function App() {
           if (done()) return;
         }
 
-        // Mark section complete
         setSectionStates(prev => ({ ...prev, [i]: 'complete' }));
 
-        // Breathing pause between sections
         await wait(1600);
         if (done()) return;
       }
 
-      // Finale: immediately go free and zoom out to show everything including title
+      // Finale
       setNarrativePhase('free');
       panTo(-50, -200, 0.45);
     })();
@@ -632,7 +622,6 @@ export default function App() {
   // Skip narrative
   const skipNarrative = useCallback(() => {
     cancelRef.current = true;
-    // Resolve any pending typewriter wait
     if (typewriterResolveRef.current) {
       typewriterResolveRef.current();
       typewriterResolveRef.current = null;
@@ -690,34 +679,56 @@ export default function App() {
   return (
     <div ref={viewportRef} className={`relative w-full h-screen desk-surface overflow-hidden ${isPathsMode ? 'paths-bg' : ''}`}>
 
-      {/* Entry screen — click to begin */}
+      {/* Entry screen — describe your world */}
       <AnimatePresence>
         {!hasEntered && (
           <motion.div
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, ease: EASE_OUT_EXPO }}
-            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center cursor-pointer select-none"
-            onClick={handleEnter}
+            className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center select-none"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: EASE_OUT_QUART, delay: 0.3 }}
-              className="text-center"
+              className="flex flex-col items-center"
             >
-              <h1 className="font-serif text-5xl text-white/80 tracking-wide mb-4">进击的巨人</h1>
-              <p className="text-white/20 font-mono text-xs tracking-[0.3em] mb-12">世 界 卷 宗</p>
-              <p className="text-white/15 text-[11px] font-mono tracking-widest animate-pulse">点 击 进 入</p>
+              <p className="text-white/40 font-mono text-[11px] tracking-[0.3em] mb-8">D E S C R I B E &nbsp; Y O U R &nbsp; W O R L D</p>
+              <input
+                type="text"
+                value={worldInput}
+                onChange={e => setWorldInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleEnter(); }}
+                autoFocus
+                className="bg-transparent border-b border-white/15 focus:border-white/40 text-white/80 font-serif text-4xl md:text-5xl tracking-wide text-center pb-3 w-[400px] md:w-[500px] outline-none transition-colors duration-300 placeholder:text-white/10"
+                placeholder="Stranger Things"
+              />
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.2 }}
+                className="mt-3 text-white/10 font-mono text-[10px] tracking-[0.2em]"
+              >
+                W O R L D &nbsp; C O M P E N D I U M
+              </motion.p>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.5 }}
+                onClick={handleEnter}
+                className="mt-12 px-8 py-2.5 border border-white/10 hover:border-white/30 text-white/25 hover:text-white/60 text-[11px] font-mono tracking-[0.3em] rounded-full transition-all duration-300 hover:bg-white/5"
+              >
+                E N T E R
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Black overlay — fades out at start (CSS animation avoids framer-motion init issue) */}
-      {hasEntered && <div className="fixed inset-0 bg-black z-[90] pointer-events-none opening-overlay" />}
+      {/* Black overlay */}
+      {hasEntered && <div className="absolute inset-0 bg-black z-[90] pointer-events-none opening-overlay" />}
 
-
-      {/* --- Top Bar: Search & Controls (only in free mode) --- */}
+      {/* --- Top Bar (free mode) --- */}
       <AnimatePresence>
         {isFree && (
           <motion.div
@@ -766,7 +777,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* --- Table of Contents (only in free mode) --- */}
+      {/* --- Table of Contents (free mode) --- */}
       <AnimatePresence>
         {isFree && (
           <motion.div
@@ -785,31 +796,41 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* --- Zoom Controls (only in free mode) --- */}
+      {/* --- Zoom Controls + Minimap (free mode) --- */}
       <AnimatePresence>
         {isFree && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.3 }}
-            className="fixed bottom-6 right-6 flex items-center gap-4 z-[70]"
+            className="fixed bottom-6 right-6 flex flex-col items-end gap-4 z-[70]"
           >
-            <ControlButton onClick={() => zoom.set(Math.min(zoom.get() + 0.1, 1.5))} icon={<ZoomIn size={18} />} label="放大" />
-            <ControlButton onClick={() => zoom.set(Math.max(zoom.get() - 0.1, 0.5))} icon={<ZoomOut size={18} />} label="缩小" />
+            <Minimap
+              items={filteredItems}
+              viewportSize={viewportSize}
+              deskX={deskX}
+              deskY={deskY}
+              zoom={zoom}
+              onNavigate={(nx, ny) => jumpTo(nx, ny, zoom.get())}
+            />
+            <div className="flex items-center gap-4">
+              <ControlButton onClick={() => zoom.set(Math.min(zoom.get() + 0.1, 1.5))} icon={<ZoomIn size={18} />} label="Zoom In" />
+              <ControlButton onClick={() => zoom.set(Math.max(zoom.get() - 0.1, 0.5))} icon={<ZoomOut size={18} />} label="Zoom Out" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* --- Skip Button (only during narration) --- */}
+      {/* --- Skip Button (narrating) --- */}
       <AnimatePresence>
-        {!isFree && (
+        {!isFree && hasEntered && (
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             transition={{ duration: 0.4, delay: 2 }}
             onClick={skipNarrative}
-            className="fixed bottom-8 right-8 z-[100] flex items-center gap-2 text-white/20 hover:text-white/50 text-xs font-mono uppercase tracking-widest transition-colors duration-200"
+            className="fixed bottom-8 right-8 z-[95] flex items-center gap-2 text-white/20 hover:text-white/50 text-xs font-mono uppercase tracking-widest transition-colors duration-200"
           >
             <span>Skip</span>
             <SkipForward size={14} />
@@ -817,13 +838,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* --- BGM Mute Toggle (always visible) --- */}
+      {/* --- BGM Mute Toggle --- */}
       <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 2.5 }}
         onClick={toggleMute}
-        className="fixed bottom-8 left-8 z-[100] p-2 text-white/20 hover:text-white/50 transition-colors duration-200"
+        className="fixed bottom-8 left-8 z-[95] p-2 text-white/20 hover:text-white/50 transition-colors duration-200"
         title={isMuted ? 'Unmute' : 'Mute'}
       >
         {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -846,7 +867,7 @@ export default function App() {
             }}
           />
 
-          {/* --- Section Headers (permanent on canvas) --- */}
+          {/* Section Headers */}
           {NARRATIVE_SECTIONS.map((section, i) => (
             <SectionHeader
               key={section.id}
@@ -854,11 +875,12 @@ export default function App() {
               state={sectionStates[i] || 'hidden'}
               isInstant={isFree}
               isDimmed={!isFree && i < activeSectionIndex}
+              displayTitle={section.id === 'title' ? worldName : undefined}
               onTypewriterDone={onTypewriterComplete}
             />
           ))}
 
-          {/* --- Character Quotes (permanent on canvas) --- */}
+          {/* Character Quotes */}
           {Object.entries(QUOTES).map(([cardId, text]) => {
             if (!visibleQuotes.has(cardId)) return null;
             const card = items.find(i => i.id === cardId);
@@ -875,7 +897,7 @@ export default function App() {
             );
           })}
 
-          {/* --- Paths Connections (only in Paths Mode) --- */}
+          {/* Paths Connections */}
           <AnimatePresence>
             {isPathsMode && (
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
@@ -899,7 +921,7 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* --- Archive Cards --- */}
+          {/* Archive Cards */}
           <AnimatePresence>
             {filteredItems.map((item) => (
               <ArchiveCard
@@ -916,35 +938,24 @@ export default function App() {
         </div>
       </motion.div>
 
-      {/* --- Status Bar (only in free mode) --- */}
+      {/* Status Bar (free mode) */}
       <AnimatePresence>
         {isFree && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="absolute bottom-6 left-8 z-[60] flex items-center gap-4 text-[10px] font-mono text-white/30"
+            className="fixed bottom-6 left-8 z-[60] flex items-center gap-4 text-[10px] font-mono text-white/30"
           >
             <div className="flex items-center gap-2">
               <Move size={12} />
-              <span>拖拽桌面以移动</span>
+              <span>Drag to navigate</span>
             </div>
             <div className="w-px h-3 bg-white/10" />
             <span>ITEMS: {filteredItems.length}</span>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* --- Minimap (only in free mode) --- */}
-      {isFree && (
-        <Minimap
-          items={items}
-          deskX={springX}
-          deskY={springY}
-          zoom={springZoom}
-          viewportSize={viewportSize}
-        />
-      )}
 
       {/* --- Detail Modal --- */}
       <AnimatePresence>
@@ -1068,11 +1079,6 @@ function Typewriter({ text, speed = 30, onComplete }: { text: string, speed?: nu
   );
 }
 
-/** Narrative-aware Typewriter that signals the sequencer */
-function NarrativeTypewriter({ text, speed = 30, onNarrativeComplete }: { text: string, speed?: number, onNarrativeComplete?: () => void }) {
-  return <Typewriter text={text} speed={speed} onComplete={onNarrativeComplete} />;
-}
-
 function TableOfContents({
   sections,
   items,
@@ -1145,15 +1151,5 @@ function TableOfContents({
         })}
       </ul>
     </nav>
-  );
-}
-
-function DetailItem({ label, value }: { label: string, value: string }) {
-  return (
-    <div className="relative pl-6">
-      <div className="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-titan-red" />
-      <h4 className="text-[10px] font-mono uppercase tracking-widest text-titan-red/60 mb-2">{label}</h4>
-      <p className="text-base leading-relaxed text-black/80 font-medium italic">"{value}"</p>
-    </div>
   );
 }

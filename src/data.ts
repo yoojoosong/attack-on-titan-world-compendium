@@ -18,202 +18,197 @@ export interface ArchiveItem {
 
 export const ARCHIVE_DATA: ArchiveItem[] = [
   // ===== Row 1 Left: Characters (header at x:-580, y:-300) =====
-  // Cards scattered organically below header
   {
-    id: 'eren',
+    id: 'eleven',
     type: 'character',
-    title: '艾伦·耶格尔',
-    content: `**追求自由的少年**，最终成为了自由的奴隶。
+    title: 'Eleven',
+    content: `**The girl with powers.** Escaped from Hawkins Lab with a shaved head and a hospital gown.
 
-他看到了未来，并决定亲手开启**地鸣**。为了保护同伴，他不惜背负全世界的仇恨。`,
-    image: 'https://picsum.photos/seed/eren/400/600',
-    metadata: { identity: '进击的巨人 / 始祖巨人', fate: '终结者' },
+She can move things with her mind, open gates between dimensions, and crush monsters — but all she ever wanted was to be **normal**.`,
+    image: '/characters/eleven.webp',
+    metadata: { identity: 'Test Subject 011', fate: 'The Key' },
     position: { x: -560, y: -140 },
-    connections: ['mikasa', 'armin', 'reiner', 'zeke']
+    connections: ['mike', 'hopper', 'will', 'dustin']
   },
   {
-    id: 'mikasa',
+    id: 'mike',
     type: 'character',
-    title: '三笠·阿克曼',
-    content: `最强的守护者。她的爱是纯粹的，也是沉重的。
+    title: 'Mike Wheeler',
+    content: `The heart of the party. He found a lost girl in the rain and gave her a home.
 
-最终，她亲手斩断了这份宿命，在围巾的温暖中送别了最爱的人。`,
-    image: 'https://picsum.photos/seed/mikasa/400/600',
-    metadata: { identity: '阿克曼末裔', fate: '守望者' },
+His loyalty is fierce, sometimes reckless. He would burn the world down for the people he loves.`,
+    image: '/characters/mike.jpeg',
+    metadata: { identity: 'Dungeon Master', fate: 'The Leader' },
     position: { x: -350, y: -170 },
-    connections: ['eren', 'armin', 'levi']
+    connections: ['eleven', 'will', 'dustin']
   },
   {
-    id: 'armin',
+    id: 'will',
     type: 'character',
-    title: '阿尔敏·阿诺德',
-    content: `梦想看海的少年。他是调查兵团的**头脑**，也是最后与世界对话的使者。
+    title: 'Will Byers',
+    content: `The boy who vanished. Taken to the **Upside Down**, he survived where no one else could.
 
-他相信理解的力量，即使在最黑暗的时刻。`,
-    image: 'https://picsum.photos/seed/armin/400/600',
-    metadata: { identity: '超大型巨人', fate: '调停者' },
+But survival left its mark. The Mind Flayer chose him, and he was never quite the same again.`,
+    image: '/characters/will.webp',
+    metadata: { identity: 'True Sight / The Spy', fate: 'The Vessel' },
     position: { x: -150, y: -150 },
-    connections: ['eren', 'mikasa', 'annie']
+    connections: ['mike', 'eleven', 'joyce']
   },
   {
-    id: 'levi',
+    id: 'hopper',
     type: 'character',
-    title: '利威尔·阿克曼',
-    content: `人类最强士兵。背负着无数战友的嘱托，在残酷的战场上寻找意义。
+    title: 'Jim Hopper',
+    content: `Hawkins' chief of police. A broken man who found purpose protecting a girl who wasn't his daughter — until she was.
 
-"**献出心脏**"对他而言，是沉重的诺言。`,
-    image: 'https://picsum.photos/seed/levi/400/600',
-    metadata: { identity: '调查兵团兵长', fate: '承诺者' },
+He walked into the fire so others wouldn't have to. **"Keep the door open three inches."**`,
+    image: '/characters/hopper.jpg',
+    metadata: { identity: 'Chief of Police', fate: 'The Protector' },
     position: { x: -480, y: 30 },
-    connections: ['erwin', 'mikasa', 'zeke']
+    connections: ['eleven', 'joyce', 'brenner']
   },
   {
-    id: 'reiner',
+    id: 'dustin',
     type: 'character',
-    title: '莱纳·布朗',
-    content: `撕裂的战士。在"英雄"与"罪人"的身份间挣扎，渴望救赎。
+    title: 'Dustin Henderson',
+    content: `The brains of the operation. Armed with a compass, a radio, and unshakable optimism.
 
-他是艾伦的**镜像**，也是战争最深刻的受害者。`,
-    image: 'https://picsum.photos/seed/reiner/400/600',
-    metadata: { identity: '铠之巨人', fate: '赎罪者' },
+His bond with Steve Harrington proved that the most unlikely friendships are the strongest ones.`,
+    image: '/characters/dustin.webp',
+    metadata: { identity: 'Party Member / Radio Operator', fate: 'The Compass' },
     position: { x: -260, y: 50 },
-    connections: ['eren', 'annie', 'bertholdt']
+    connections: ['mike', 'steve', 'eleven']
   },
   {
-    id: 'zeke',
+    id: 'steve',
     type: 'character',
-    title: '吉克·耶格尔',
-    content: `**安乐死计划**的制定者。他认为不被生下来才是最大的救赎。
+    title: 'Steve Harrington',
+    content: `From king of the school to **babysitter of the apocalypse**.
 
-与艾伦的血缘连接，开启了最终的悲剧。`,
-    image: 'https://picsum.photos/seed/zeke/400/600',
-    metadata: { identity: '兽之巨人', fate: '虚无主义者' },
+Armed with a nail bat and a surprising amount of heart, Steve became the hero nobody — including himself — expected.`,
+    image: '/characters/steve.webp',
+    metadata: { identity: 'Former King of Hawkins High', fate: 'The Unlikely Hero' },
     position: { x: -130, y: 70 },
-    connections: ['eren', 'levi']
+    connections: ['dustin', 'nancy']
   },
 
   // ===== Row 1 Right: Locations (header at x:380, y:-300) =====
-  // Cards scattered organically below header
   {
-    id: 'shiganshina',
+    id: 'hawkins',
     type: 'location',
-    title: '希干希纳区',
-    content: `一切开始的地方。
+    title: 'Hawkins, Indiana',
+    content: `A quiet town with a dark secret beneath its surface.
 
-那一天，人类回想起了受巨人支配的恐惧，以及被囚禁在鸟笼中的屈辱。`,
-    image: 'https://picsum.photos/seed/shiganshina/600/400',
-    metadata: { status: '已收复', importance: '极高' },
+Nothing ever happens in Hawkins — until everything does. The lab cracked the world open, and now the darkness seeps through.`,
+    image: 'https://picsum.photos/seed/hawkins/600/400',
+    metadata: { status: 'Fractured', importance: 'Critical' },
     position: { x: 370, y: -130 },
-    connections: ['eren', 'mikasa', 'armin']
+    connections: ['eleven', 'hopper', 'will']
   },
   {
-    id: 'ocean',
+    id: 'upside_down',
     type: 'location',
-    title: '大海',
-    content: `墙外世界的象征。
+    title: 'The Upside Down',
+    content: `A mirror dimension. Cold, dark, and decaying — a toxic copy of our world ruled by a hive mind.
 
-艾伦曾以为海的那边是自由，但那里只有敌人。*"如果杀光海那边的敌人，我们就能获得自由吗？"*`,
-    image: 'https://picsum.photos/seed/ocean/600/400',
-    metadata: { status: '真实存在', importance: '象征意义' },
+It exists beneath everything, separated by the thinnest of membranes. *"It's like Hawkins, but it's so dark... so dark and empty."*`,
+    image: 'https://picsum.photos/seed/upsidedown/600/400',
+    metadata: { status: 'Active Threat', importance: 'Existential' },
     position: { x: 640, y: -110 },
-    connections: ['armin', 'eren']
+    connections: ['will', 'eleven', 'vecna']
   },
   {
-    id: 'liberio',
+    id: 'lab',
     type: 'location',
-    title: '雷贝利欧收容区',
-    content: `马莱帝国的艾尔迪亚人聚居地。
+    title: 'Hawkins National Laboratory',
+    content: `Where it all began. Under the direction of Dr. Martin Brenner, children were experimented on in the name of Cold War science.
 
-高墙之内的另一种牢笼。这里的艾尔迪亚人背负着祖先的罪孽，渴望成为"荣誉马莱人"。`,
-    image: 'https://picsum.photos/seed/liberio/600/400',
-    metadata: { status: '遭袭', importance: '政治中心' },
+Eleven opened the first gate here. The lab is the wound that Hawkins can never close.`,
+    image: 'https://picsum.photos/seed/hawkinslab/600/400',
+    metadata: { status: 'Destroyed', importance: 'Ground Zero' },
     position: { x: 480, y: 30 },
-    connections: ['reiner', 'zeke', 'eren']
+    connections: ['eleven', 'hopper', 'brenner']
   },
 
   // ===== Row 2 Left: Events (header at x:-680, y:350) =====
-  // Cards scattered organically below header
   {
-    id: 'basement',
+    id: 'disappearance',
     type: 'event',
-    title: '地下室的真相',
-    content: `格里沙留下的三本书，揭示了人类并未灭绝。
+    title: "Will's Disappearance",
+    content: `November 6, 1983. Will Byers rides his bike home from Mike's house and never arrives.
 
-墙外存在着名为**马莱**的国家，而墙内的人类只是被遗弃在岛上的牺牲品。`,
-    metadata: { time: '850年', impact: '世界观翻转' },
+A boy vanishes. A gate opens. A girl appears. And Hawkins, Indiana is never the same again.`,
+    metadata: { time: 'November 1983', impact: 'The Catalyst' },
     position: { x: -680, y: 510 },
-    connections: ['eren', 'shiganshina']
+    connections: ['will', 'hawkins']
   },
   {
-    id: 'trost',
+    id: 'starcourt',
     type: 'event',
-    title: '托罗斯特区攻防战',
-    content: `人类第一次战胜巨人的战役。
+    title: 'The Battle of Starcourt',
+    content: `Beneath the Starcourt Mall, the Soviets built a machine to reopen the gate.
 
-艾伦变身为巨人并堵住了城门，证明了人类拥有反击的力量。`,
-    metadata: { time: '850年', impact: '希望的曙光' },
+The Mind Flayer assembled a flesh monster. Billy Hargrove sacrificed himself. Hopper was lost in the explosion. The mall burned. Summer ended.`,
+    metadata: { time: 'July 1985', impact: 'Loss of Innocence' },
     position: { x: -510, y: 540 },
-    connections: ['eren', 'armin', 'mikasa']
+    connections: ['eleven', 'hopper', 'dustin']
   },
   {
-    id: 'rumbling',
+    id: 'vecna_curse',
     type: 'event',
-    title: '地鸣',
-    content: `**数千万超大型巨人踏平世界**。
+    title: "Vecna's Curse",
+    content: `**Four kills to open four gates.** Vecna reached into the minds of Hawkins' most vulnerable, exploiting their trauma and guilt.
 
-这是艾伦为保护帕拉迪岛选择的极端毁灭。文明在巨人的足迹下化为尘埃。`,
-    metadata: { time: '854年', scale: '全球性毁灭' },
+The clock chimed. The earth cracked. And the Upside Down began to consume Hawkins from within.`,
+    metadata: { time: 'March 1986', scale: 'Apocalyptic' },
     position: { x: -600, y: 620 },
-    connections: ['eren', 'ymir_origin']
+    connections: ['vecna', 'eleven']
   },
 
   // ===== Row 2 Center: Secrets (header at x:-100, y:350) =====
-  // Cards scattered organically below header
   {
-    id: 'ymir_origin',
+    id: 'vecna',
     type: 'secret',
-    title: '始祖尤弥尔',
-    content: `两千年前与"**有机生物之源**"接触的少女。
+    title: 'Vecna / Henry Creel / 001',
+    content: `The first test subject. A boy named Henry Creel who discovered he could reach into people's minds.
 
-她在"坐标"处等待了两千年，直到艾伦给予她选择的自由。`,
-    metadata: { source: '路径记忆', level: '最高机密' },
+Brenner thought he could control him. Eleven banished him to the Upside Down. He became something else entirely — **the monster pulling all the strings**.`,
+    metadata: { source: 'Recovered Memories', level: 'Top Secret' },
     position: { x: -110, y: 520 },
-    connections: ['eren', 'zeke']
+    connections: ['eleven', 'brenner']
   },
   {
-    id: 'ackerman',
+    id: 'brenner',
     type: 'secret',
-    title: '阿克曼的真相',
-    content: `巨人科学的副产物。
+    title: "Brenner's Experiments",
+    content: `Project MKUltra. Children with psychokinetic abilities, numbered like specimens.
 
-拥有人类姿态的巨人，觉醒后拥有极强的战斗力，且不受始祖巨人的记忆操控。`,
-    metadata: { source: '马莱研究', level: '绝密' },
+Dr. Martin Brenner — "Papa" — created the conditions for every disaster that followed. Science without conscience is the ruin of the soul.`,
+    metadata: { source: 'Declassified Files', level: 'Classified' },
     position: { x: 80, y: 570 },
-    connections: ['levi', 'mikasa']
+    connections: ['eleven', 'hopper', 'vecna']
   },
 
   // ===== Row 2 Right: Perspectives (header at x:500, y:350) =====
-  // Cards scattered organically below header
   {
-    id: 'erwin_speech',
+    id: 'hopper_letter',
     type: 'perspective',
-    title: '埃尔文的演讲',
-    content: `*"为死者赋予意义，是生者的责任。"*
+    title: "Hopper's Letter",
+    content: `*"I want you to feel things. Sad things. And happy things. But mostly I want you to know that it's okay to feel."*
 
-他在冲锋前彻底放弃了梦想，将希望寄托在后继者身上。`,
-    metadata: { author: '埃尔文·史密斯', theme: '牺牲' },
+A letter from a father to his adopted daughter, read too late. The most human moment in a story about monsters.`,
+    metadata: { author: 'Jim Hopper', theme: 'Love & Loss' },
     position: { x: 490, y: 520 },
-    connections: ['levi']
+    connections: ['hopper', 'eleven']
   },
   {
-    id: 'freedom_cost',
+    id: 'growing_up',
     type: 'perspective',
-    title: '自由的代价',
-    content: `艾伦追求的自由是剥夺他人的自由。
+    title: 'The Cost of Growing Up',
+    content: `The real horror of Stranger Things isn't the Demogorgon. It's growing up.
 
-这是一种极致的自私，也是极致的爱。**自由从来不是免费的。**`,
-    metadata: { theme: '哲学探讨', author: '穿过者' },
+Friendships fracture. Innocence fades. The game of D&D can't protect you from the real monsters. **The Upside Down is just childhood ending.**`,
+    metadata: { theme: 'Coming of Age', author: 'The Party' },
     position: { x: 650, y: 570 },
-    connections: ['eren']
+    connections: ['mike', 'will']
   }
 ];

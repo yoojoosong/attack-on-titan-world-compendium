@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs ls:*)",
+      "Bash(cp \"/Users/yujun/Desktop/steveharrinton.webp\" \"/Users/yujun/Documents/Neta World 设计/attack-on-titan_-world-compendium/public/characters/steve.webp\")",
+      "Bash(cp \"/Users/yujun/Desktop/dustinhenderson.webp\" \"/Users/yujun/Documents/Neta World 设计/attack-on-titan_-world-compendium/public/characters/dustin.webp\")",
+      "Bash(cp \"/Users/yujun/Desktop/jimhopper.jpg\" \"/Users/yujun/Documents/Neta World 设计/attack-on-titan_-world-compendium/public/characters/hopper.jpg\")",
+      "Bash(cp \"/Users/yujun/Desktop/willbyers.webp\" \"/Users/yujun/Documents/Neta World 设计/attack-on-titan_-world-compendium/public/characters/will.webp\")",
+      "Bash(cp \"/Users/yujun/Desktop/mikewheeler.jpeg\" \"/Users/yujun/Documents/Neta World 设计/attack-on-titan_-world-compendium/public/characters/mike.jpeg\")"
     ]
   }
 }
