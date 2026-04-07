@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+const asset = (path: string) => path.startsWith('/') ? `${BASE}${path}` : path;
+
 export type ArchiveType = 'character' | 'location' | 'event' | 'secret' | 'perspective' | 'story';
 export type AssetType = 'image' | 'video' | 'game' | 'audio' | 'file';
 export type ItemKind = 'document' | 'asset';
@@ -36,8 +39,8 @@ export const ARCHIVE_DATA: ArchiveItem[] = [
     content: `**The girl with powers.** Escaped from Hawkins Lab with a shaved head and a hospital gown.
 
 She can move things with her mind, open gates between dimensions, and crush monsters — but all she ever wanted was to be **normal**.`,
-    image: '/characters/eleven.webp',
-    cover: '/characters/eleven.webp',
+    image: asset('/characters/eleven.webp'),
+    cover: asset('/characters/eleven.webp'),
     metadata: { identity: 'Test Subject 011', fate: 'The Key' },
     position: { x: -560, y: -140 },
     connections: ['mike', 'hopper', 'will', 'dustin'],
@@ -53,8 +56,8 @@ She can move things with her mind, open gates between dimensions, and crush mons
     content: `The heart of the party. He found a lost girl in the rain and gave her a home.
 
 His loyalty is fierce, sometimes reckless. He would burn the world down for the people he loves.`,
-    image: '/characters/mike.jpeg',
-    cover: '/characters/mike.jpeg',
+    image: asset('/characters/mike.jpeg'),
+    cover: asset('/characters/mike.jpeg'),
     metadata: { identity: 'Dungeon Master', fate: 'The Leader' },
     position: { x: -350, y: -170 },
     connections: ['eleven', 'will', 'dustin'],
@@ -70,8 +73,8 @@ His loyalty is fierce, sometimes reckless. He would burn the world down for the 
     content: `The boy who vanished. Taken to the **Upside Down**, he survived where no one else could.
 
 But survival left its mark. The Mind Flayer chose him, and he was never quite the same again.`,
-    image: '/characters/will.webp',
-    cover: '/characters/will.webp',
+    image: asset('/characters/will.webp'),
+    cover: asset('/characters/will.webp'),
     metadata: { identity: 'True Sight / The Spy', fate: 'The Vessel' },
     position: { x: -150, y: -150 },
     connections: ['mike', 'eleven', 'joyce'],
@@ -87,8 +90,8 @@ But survival left its mark. The Mind Flayer chose him, and he was never quite th
     content: `Hawkins' chief of police. A broken man who found purpose protecting a girl who wasn't his daughter — until she was.
 
 He walked into the fire so others wouldn't have to. **"Keep the door open three inches."**`,
-    image: '/characters/hopper.jpg',
-    cover: '/characters/hopper.jpg',
+    image: asset('/characters/hopper.jpg'),
+    cover: asset('/characters/hopper.jpg'),
     metadata: { identity: 'Chief of Police', fate: 'The Protector' },
     position: { x: -480, y: 30 },
     connections: ['eleven', 'joyce', 'brenner'],
@@ -104,8 +107,8 @@ He walked into the fire so others wouldn't have to. **"Keep the door open three 
     content: `The brains of the operation. Armed with a compass, a radio, and unshakable optimism.
 
 His bond with Steve Harrington proved that the most unlikely friendships are the strongest ones.`,
-    image: '/characters/dustin.webp',
-    cover: '/characters/dustin.webp',
+    image: asset('/characters/dustin.webp'),
+    cover: asset('/characters/dustin.webp'),
     metadata: { identity: 'Party Member / Radio Operator', fate: 'The Compass' },
     position: { x: -260, y: 50 },
     connections: ['mike', 'steve', 'eleven'],
@@ -121,8 +124,8 @@ His bond with Steve Harrington proved that the most unlikely friendships are the
     content: `From king of the school to **babysitter of the apocalypse**.
 
 Armed with a nail bat and a surprising amount of heart, Steve became the hero nobody — including himself — expected.`,
-    image: '/characters/steve.webp',
-    cover: '/characters/steve.webp',
+    image: asset('/characters/steve.webp'),
+    cover: asset('/characters/steve.webp'),
     metadata: { identity: 'Former King of Hawkins High', fate: 'The Unlikely Hero' },
     position: { x: -130, y: 70 },
     connections: ['dustin', 'nancy'],
