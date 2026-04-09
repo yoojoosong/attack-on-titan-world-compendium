@@ -89,16 +89,16 @@ const COVER_GRADIENTS: Record<string, string> = {
 const SECTION_TYPE_MAP: Record<string, string> = {
   characters: 'character',
   locations: 'location',
-  events: 'event',
   secrets: 'secret',
   perspectives: 'perspective',
+  timeline: 'event',
 };
 
 // --- View State ---
 type ViewState =
   | { kind: 'overview' }
   | { kind: 'section'; sectionId: string }
-  | { kind: 'workspace'; itemId: string };
+  | { kind: 'detail'; itemId: string };
 
 // --- Narrative Data (unchanged) ---
 
@@ -156,28 +156,29 @@ const NARRATIVE_SECTIONS: NarrativeSection[] = [
     cardIds: ['hawkins', 'upside_down', 'lab'],
   },
   {
-    id: 'events',
-    title: 'Turning Points',
-    text: 'November 1983. A boy vanishes.\nA gate opens. The world cracks.\nAnd nothing in Hawkins is ever the same.',
-    position: { x: -680, y: 350 },
-    camera: { x: -530, y: 520, zoom: 1 },
-    cardIds: ['disappearance', 'starcourt', 'vecna_curse'],
-  },
-  {
     id: 'secrets',
     title: 'Classified',
     text: 'The following files were sealed by the Department of Energy.\nYou are reading records that should not exist.',
-    position: { x: -100, y: 350 },
-    camera: { x: 50, y: 520, zoom: 1.05 },
-    cardIds: ['vecna', 'brenner'],
+    position: { x: -580, y: 350 },
+    camera: { x: -430, y: 520, zoom: 1.05 },
+    cardIds: ['vecna', 'brenner', 'upside_down_rules', 'psychic_powers', 'gate_mechanics', 'hive_mind'],
     textClass: 'text-sm text-red-400/60 leading-relaxed',
+  },
+  {
+    id: 'timeline',
+    title: 'The Chronicle',
+    text: 'Every story has a beginning. And an end.\nThis is how the darkness unfolded —\nand how Hawkins was never the same.',
+    position: { x: 120, y: 350 },
+    camera: { x: 170, y: 350, zoom: 0.85 },
+    cardIds: ['creel_massacre', 'project_mkultra', 'eleven_001', 'disappearance', 'eleven_escapes', 'will_rescued', 'mind_flayer', 'gate_closed', 'starcourt', 'vecna_curse', 'four_gates', 'final_battle'],
+    textClass: 'text-sm text-white/50 font-serif leading-relaxed italic',
   },
   {
     id: 'perspectives',
     title: 'Echoes',
     text: 'When all the facts are laid bare, you realize —\nthe real monster was never in the Upside Down.\nIt was always about growing up.',
-    position: { x: 500, y: 350 },
-    camera: { x: 620, y: 520, zoom: 1.05 },
+    position: { x: 620, y: 350 },
+    camera: { x: 740, y: 520, zoom: 1.05 },
     cardIds: ['hopper_letter', 'growing_up'],
   },
 ];
@@ -260,7 +261,7 @@ const ArchiveCard = ({ item, isPaths, onClick, onPositionChange, isDraggable, is
       case 'character': return 'polaroid w-44';
       case 'location': return 'blueprint w-64';
       case 'event': return 'newspaper-clip w-56';
-      case 'secret': return 'top-secret-folder w-60';
+      case 'secret': return 'newspaper-clip w-56';
       case 'perspective': return 'handwritten-note w-52';
       default: return '';
     }
@@ -305,13 +306,15 @@ const ArchiveCard = ({ item, isPaths, onClick, onPositionChange, isDraggable, is
         )}
         {item.type === 'secret' && (
           <>
-            <div className="flex items-center justify-between mb-2">
-              <Lock size={14} className="text-titan-red" />
-              <span className="bg-titan-red text-white text-[8px] px-1 font-bold">CONFIDENTIAL</span>
+            <div className="flex items-center justify-between mb-2 border-b border-black/15 pb-1">
+              <span className="text-[8px] font-mono font-bold text-red-700/80 tracking-wider uppercase">⬤ Classified</span>
+              <span className="text-[7px] font-mono text-black/30">{item.metadata?.level || 'TOP SECRET'}</span>
             </div>
-            <h4 className="font-serif font-bold text-xs mb-1">{item.title}</h4>
-            <div className="h-1 w-full bg-black/10 mb-2" />
-            <p className="text-[10px] leading-tight opacity-60">Click to decrypt classified data...</p>
+            <h4 className="font-serif font-bold text-sm mb-2 text-black/90">{item.title}</h4>
+            <div className="text-[10px] leading-relaxed font-mono text-black/60">
+              {item.content.replace(/[*#_`\[\]]/g, '').substring(0, 70)}...
+            </div>
+            <div className="mt-2 text-[8px] font-mono text-black/30 text-right">SRC: {item.metadata?.source || 'REDACTED'}</div>
           </>
         )}
         {item.type === 'perspective' && (
@@ -374,14 +377,16 @@ function SectionCardContent({ item }: { item: ArchiveItem }) {
       );
     case 'secret':
       return (
-        <div className="top-secret-folder !w-full">
-          <div className="flex items-center justify-between mb-2">
-            <Lock size={14} className="text-titan-red" />
-            <span className="bg-titan-red text-white text-[8px] px-1 font-bold">CONFIDENTIAL</span>
+        <div className="newspaper-clip !w-full">
+          <div className="flex items-center justify-between mb-2 border-b border-black/15 pb-1">
+            <span className="text-[8px] font-mono font-bold text-red-700/80 tracking-wider uppercase">⬤ Classified</span>
+            <span className="text-[7px] font-mono text-black/30">{item.metadata?.level || 'TOP SECRET'}</span>
           </div>
-          <h4 className="font-serif font-bold text-xs mb-1">{item.title}</h4>
-          <div className="h-1 w-full bg-black/10 mb-2" />
-          <p className="text-[10px] leading-tight opacity-60">{item.content.replace(/[*#_`\[\]]/g, '').substring(0, 80)}...</p>
+          <h4 className="font-serif font-bold text-sm mb-2 text-black/90">{item.title}</h4>
+          <div className="text-[10px] leading-relaxed font-mono text-black/60">
+            {item.content.replace(/[*#_`\[\]]/g, '').substring(0, 100)}...
+          </div>
+          <div className="mt-2 text-[8px] font-mono text-black/30 text-right">SRC: {item.metadata?.source || 'REDACTED'}</div>
         </div>
       );
     case 'perspective':
@@ -478,10 +483,246 @@ function SectionGridView({ sectionId, items, onOpen, onBack, onCreate }: {
 }
 
 // ===========================================================================
-// Document Workspace
+// Canvas Timeline (vertical spine at bottom of canvas)
 // ===========================================================================
 
-function DocumentWorkspace({ item, items, onClose, onUpdate, onNavigateItem }: {
+function CanvasTimeline({ items, isVisible, isInstant, onEventClick, mode = 'carousel' }: {
+  items: ArchiveItem[];
+  isVisible: boolean;
+  isInstant: boolean;
+  onEventClick: (id: string) => void;
+  mode?: 'carousel' | 'expanded';
+}) {
+  const timelineEvents = useMemo(() =>
+    items
+      .filter(i => i.type === 'event' && i.timeline)
+      .sort((a, b) => (a.timeline!.date > b.timeline!.date ? 1 : -1)),
+    [items]
+  );
+
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    if (mode !== 'carousel' || timelineEvents.length === 0) return;
+    const interval = setInterval(() => {
+      setCarouselIndex(prev => (prev + 1) % timelineEvents.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [mode, timelineEvents.length]);
+
+  if (!isVisible || timelineEvents.length === 0) return null;
+
+  // --- CAROUSEL MODE (overview) ---
+  // Shows 3 strip cards, continuous vertical scroll — whole strip list shifts up smoothly
+  if (mode === 'carousel') {
+    const carouselX = 20;
+    const carouselY = 530;
+    const stripW = 300;
+    const stripH = 42;
+    const gap = 7;
+    const step = stripH + gap;
+    const visibleCount = 3;
+    const totalH = stripH * visibleCount + gap * (visibleCount - 1);
+
+    // Build a window of 5 items (1 above + 3 visible + 1 below) for smooth entry/exit
+    const windowIndices = [];
+    for (let offset = -1; offset <= visibleCount; offset++) {
+      windowIndices.push((carouselIndex + offset + timelineEvents.length) % timelineEvents.length);
+    }
+
+    return (
+      <div className="absolute pointer-events-auto z-[8]"
+        style={{ transform: `translate(${carouselX}px, ${carouselY}px)` }}>
+
+        {/* Mini spine line */}
+        <div className="absolute" style={{
+          width: 1, height: totalH + 20,
+          left: -10, top: -6,
+          background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.12) 8%, rgba(255,255,255,0.12) 92%, transparent)',
+        }} />
+
+        {/* Strips container — clip only vertically */}
+        <div className="relative" style={{ height: totalH, width: stripW + 20, overflowY: 'hidden', overflowX: 'visible' }}>
+          <AnimatePresence initial={false}>
+            {windowIndices.map((eventIdx, i) => {
+              const event = timelineEvents[eventIdx];
+              // Position: offset -1 is above viewport, 0-2 are visible, 3 is below
+              const slotY = (i - 1) * step;
+              return (
+                <motion.div
+                  key={`${carouselIndex}-${eventIdx}`}
+                  initial={{ y: slotY + step }}
+                  animate={{ y: slotY }}
+                  exit={{ y: slotY - step }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="absolute left-0 right-0"
+                >
+                  <div className="relative">
+                    {/* Spine dot */}
+                    <div className="absolute" style={{ left: -12.5, top: stripH / 2 - 3 }}>
+                      <div className={`rounded-full ${i === 1 ? 'w-[7px] h-[7px] bg-white/30 border border-white/40' : 'w-[5px] h-[5px] bg-white/15'}`} />
+                    </div>
+                    {/* Strip */}
+                    <div
+                      onClick={() => onEventClick(event.id)}
+                      className="rounded-sm border border-white/[0.08] hover:border-white/20 cursor-pointer transition-colors duration-200 flex items-center"
+                      style={{
+                        width: stripW, height: stripH,
+                        background: 'linear-gradient(135deg, rgba(245,240,230,0.85) 0%, rgba(235,228,215,0.78) 100%)',
+                      }}
+                    >
+                      <div className="flex h-full px-3 gap-2.5 items-center w-full">
+                        <span className="font-mono text-[8px] font-bold text-stone-500/65 uppercase tracking-wider whitespace-nowrap shrink-0">
+                          {event.timeline!.dateLabel}
+                        </span>
+                        <div className="w-px h-3.5 bg-stone-400/15 shrink-0" />
+                        <h4 className="font-serif text-[12px] font-bold text-stone-800/90 truncate">
+                          {event.title}
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+
+        {/* Counter */}
+        <div className="mt-2">
+          <span className="font-mono text-[8px] text-white/20">
+            {carouselIndex + 1} / {timelineEvents.length}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // --- EXPANDED MODE (section zoom-in) ---
+  // Single vertical timeline with compact strip cards.
+  // Spine tight against left edge of strips, date labels on left, content on right.
+  const stripW = 400;
+  const stripH = 72;
+  const stripGap = 12;
+  const rowStep = stripH + stripGap;
+  const spineX = -300;
+  const originY = -180;
+  const stripX = spineX + 14; // strip starts just right of spine
+  const totalHeight = (timelineEvents.length - 1) * rowStep + stripH;
+
+  return (
+    <div className="absolute pointer-events-auto z-[8]">
+      {/* Vertical spine line */}
+      <motion.div
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ duration: 1.2, ease: EASE_OUT_EXPO, delay: 0.2 }}
+        className="absolute origin-top"
+        style={{
+          width: 1,
+          height: totalHeight + 50,
+          top: originY - 10,
+          left: spineX,
+          background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.18) 3%, rgba(255,255,255,0.18) 97%, transparent)',
+        }}
+      />
+
+      {/* Timeline strips */}
+      {timelineEvents.map((event, i) => {
+        const y = originY + i * rowStep;
+        const centerY = y + stripH / 2;
+        const year = event.timeline!.date.substring(0, 4);
+        const prevYear = i > 0 ? timelineEvents[i - 1].timeline!.date.substring(0, 4) : '';
+        const isNewEra = year !== prevYear;
+        const contentPreview = event.content.replace(/[*#`]/g, '').substring(0, 60) + '...';
+
+        return (
+          <motion.div
+            key={event.id}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, ease: EASE_OUT_QUART, delay: 0.3 + i * 0.05 }}
+            className="absolute"
+            style={{ top: y, left: spineX - 80 }}
+          >
+            {/* Node dot on spine */}
+            <div className="absolute" style={{ top: stripH / 2 - 4, left: 80 - 4 }}>
+              <div className={`rounded-full z-10 ${isNewEra ? 'w-[9px] h-[9px] bg-white/35 border border-white/50' : 'w-[7px] h-[7px] bg-white/20 border border-white/30'}`} />
+            </div>
+
+            {/* Date label left of spine */}
+            <div className="absolute text-right" style={{ top: stripH / 2 - 7, right: stripW + 80 - spineX + spineX + 92, width: 70, left: 0 }}>
+              {isNewEra && (
+                <span className="font-mono text-[10px] text-white/45 font-semibold whitespace-nowrap">
+                  {event.timeline!.dateLabel}
+                </span>
+              )}
+            </div>
+
+            {/* Strip card */}
+            <div
+              onClick={() => onEventClick(event.id)}
+              className="absolute cursor-pointer group rounded-sm border border-white/[0.08] hover:border-white/20 transition-all duration-200"
+              style={{
+                left: 94,
+                top: 0,
+                width: stripW,
+                height: stripH,
+                background: 'linear-gradient(135deg, rgba(245,240,230,0.95) 0%, rgba(235,228,215,0.92) 100%)',
+              }}
+            >
+              <div className="flex h-full px-4 py-2.5 gap-4">
+                {/* Date badge */}
+                <div className="flex items-center shrink-0">
+                  <span className="font-mono text-[9px] text-stone-500/70 font-bold uppercase tracking-wider whitespace-nowrap">
+                    {event.timeline!.dateLabel}
+                  </span>
+                </div>
+                {/* Divider */}
+                <div className="w-px bg-stone-400/20 shrink-0" />
+                {/* Content */}
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  <h4 className="font-serif text-[13px] font-bold text-stone-800 truncate group-hover:text-stone-950 transition-colors">
+                    {event.title}
+                  </h4>
+                  <p className="font-mono text-[9px] text-stone-500/60 truncate mt-0.5">
+                    {contentPreview}
+                  </p>
+                </div>
+                {/* Impact tag */}
+                {event.metadata?.impact && (
+                  <div className="flex items-center shrink-0">
+                    <span className="font-mono text-[8px] text-stone-400/50 uppercase tracking-wider whitespace-nowrap">
+                      {event.metadata.impact}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+
+      {/* End cap */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.4 + timelineEvents.length * 0.05 + 0.2 }}
+        className="absolute flex flex-col items-center gap-1.5"
+        style={{ top: originY + totalHeight + 30, left: spineX, transform: 'translateX(-50%)' }}
+      >
+        <div className="w-px h-5 bg-gradient-to-b from-white/[0.1] to-transparent" />
+        <span className="font-mono text-[8px] text-white/15 tracking-[0.2em]">TO BE CONTINUED</span>
+      </motion.div>
+    </div>
+  );
+}
+
+// ===========================================================================
+// Document Detail
+// ===========================================================================
+
+function DocumentDetail({ item, items, onClose, onUpdate, onNavigateItem }: {
   item: ArchiveItem;
   items: ArchiveItem[];
   onClose: () => void;
@@ -630,10 +871,10 @@ function DocumentWorkspace({ item, items, onClose, onUpdate, onNavigateItem }: {
 }
 
 // ===========================================================================
-// Asset Workspace
+// Asset Detail
 // ===========================================================================
 
-function AssetWorkspace({ item, onClose, onUpdate }: {
+function AssetDetail({ item, onClose, onUpdate }: {
   item: ArchiveItem; onClose: () => void; onUpdate: (id: string, updates: Partial<ArchiveItem>) => void;
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1055,10 +1296,10 @@ function TableOfContents({ sections, items, activeView, onSectionClick, onCardCl
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Determine which section is "active" (section grid or workspace of an item in that section)
+  // Determine which section is "active" (section grid or detail of an item in that section)
   const activeSectionId = activeView.kind === 'section'
     ? (activeView as { sectionId: string }).sectionId
-    : activeView.kind === 'workspace'
+    : activeView.kind === 'detail'
       ? (() => {
           const item = items.find(i => i.id === (activeView as { itemId: string }).itemId);
           if (!item) return null;
@@ -1098,13 +1339,16 @@ function TableOfContents({ sections, items, activeView, onSectionClick, onCardCl
           const isActive = activeSectionId === section.id;
           const isOpen = expandedId === section.id;
           const sectionType = SECTION_TYPE_MAP[section.id];
-          const sectionItems = sectionType
-            ? items.filter(i => i.type === sectionType)
-            : section.cardIds.map(id => items.find(i => i.id === id)).filter(Boolean) as ArchiveItem[];
+          // Timeline: all events chronologically. Others: filter by type or cardIds.
+          const sectionItems = section.id === 'timeline'
+            ? items.filter(i => i.type === 'event' && i.timeline).sort((a, b) => (a.timeline!.date > b.timeline!.date ? 1 : -1))
+            : sectionType
+              ? items.filter(i => i.type === sectionType)
+              : section.cardIds.map(id => items.find(i => i.id === id)).filter(Boolean) as ArchiveItem[];
           const count = sectionItems.length;
 
-          // Highlight current workspace item
-          const activeItemId = activeView.kind === 'workspace' ? (activeView as { itemId: string }).itemId : null;
+          // Highlight current detail item
+          const activeItemId = activeView.kind === 'detail' ? (activeView as { itemId: string }).itemId : null;
 
           return (
             <li key={section.id}>
@@ -1120,7 +1364,7 @@ function TableOfContents({ sections, items, activeView, onSectionClick, onCardCl
                 {isOpen && sectionItems.length > 0 && (
                   <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: EASE_OUT_QUART }}
-                    className="overflow-hidden">
+                    className="overflow-hidden max-h-[200px] overflow-y-auto custom-scrollbar">
                     {sectionItems.map((si) => (
                       <li key={si.id}>
                         <button onClick={() => onCardClick(si)}
@@ -1156,8 +1400,8 @@ const AGENT_STEPS: { sectionIndex: number; message: string }[] = [
   { sectionIndex: 1, message: 'Parsing world lore...' },
   { sectionIndex: 2, message: 'Generating characters...' },
   { sectionIndex: 3, message: 'Mapping locations...' },
-  { sectionIndex: 4, message: 'Recording events...' },
-  { sectionIndex: 5, message: 'Classifying intel...' },
+  { sectionIndex: 4, message: 'Classifying intel...' },
+  { sectionIndex: 5, message: 'Building timeline...' },
   { sectionIndex: 6, message: 'Collecting perspectives...' },
 ];
 
@@ -1294,7 +1538,7 @@ export default function App() {
       createdBy: 'user',
     };
     setItems(prev => [...prev, newItem]);
-    setView({ kind: 'workspace', itemId: newItem.id });
+    setView({ kind: 'detail', itemId: newItem.id });
   }, []);
 
   // --- Narrative Sequencer (UNCHANGED) ---
@@ -1322,7 +1566,7 @@ export default function App() {
         await wait(1600); if (done()) return;
       }
       setNarrativePhase('free');
-      panTo(-50, -200, 0.45);
+      panTo(50, 50, 0.31);
     })();
     return () => { cancelRef.current = true; };
   }, [hasEntered, narrativePhase, panTo, waitForTypewriter]);
@@ -1336,7 +1580,7 @@ export default function App() {
     setRevealedCards(new Set(ARCHIVE_DATA.map(item => item.id)));
     setVisibleQuotes(new Set(Object.keys(QUOTES)));
     setNarrativePhase('free');
-    panTo(-50, -200, 0.45);
+    panTo(50, 50, 0.31);
   }, [panTo]);
 
   // Connection lines
@@ -1367,8 +1611,8 @@ export default function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Workspace item
-  const workspaceItem = view.kind === 'workspace' ? items.find(i => i.id === view.itemId) : null;
+  // Detail item
+  const detailItem = view.kind === 'detail' ? items.find(i => i.id === view.itemId) : null;
 
   // Section grid: compute neat grid positions for section items on the canvas
   const CARD_WIDTHS: Record<string, number> = { character: 176, location: 256, event: 224, secret: 240, perspective: 208 };
@@ -1376,15 +1620,19 @@ export default function App() {
 
   const sectionGridPositions = useMemo(() => {
     if (view.kind !== 'section') return {};
-    const sectionType = SECTION_TYPE_MAP[view.sectionId];
+    const sectionId = view.sectionId;
+    const sectionType = SECTION_TYPE_MAP[sectionId];
     if (!sectionType) return {};
+
+    // Timeline: CanvasTimeline renders custom strip cards, no ArchiveCard grid needed
+    if (sectionId === 'timeline') return {};
+
     const sectionItems = items.filter(i => i.type === sectionType);
     const cardW = CARD_WIDTHS[sectionType] || 200;
     const cardH = CARD_HEIGHTS[sectionType] || 220;
     const gap = 28;
     const cols = Math.min(sectionItems.length, sectionType === 'character' ? 4 : 3);
     const gap2 = gap;
-    // Grid positioned at canvas center area, leaving room for title above
     const gridOriginX = -380;
     const gridOriginY = -150;
 
@@ -1406,18 +1654,23 @@ export default function App() {
   // Navigate to section — rearrange cards into grid on canvas
   const openSection = useCallback((sectionId: string) => {
     setView({ kind: 'section', sectionId });
-    // Pan camera to frame the grid
-    panTo(-50, 50, 0.85);
+    if (sectionId === 'timeline') {
+      // Pan to strip timeline (spineX=-300, strips at -206, originY=-180)
+      panTo(170, 350, 0.85);
+    } else {
+      // Pan camera to frame the grid
+      panTo(-50, 50, 0.85);
+    }
   }, [panTo]);
 
-  // Open item in workspace (from canvas or section grid)
-  const openWorkspace = useCallback((id: string) => {
+  // Open item detail (from canvas or section grid)
+  const openDetail = useCallback((id: string) => {
     previousViewRef.current = view;
-    setView({ kind: 'workspace', itemId: id });
+    setView({ kind: 'detail', itemId: id });
   }, [view]);
 
-  // Go back from workspace
-  const closeWorkspace = useCallback(() => {
+  // Go back from detail
+  const closeDetail = useCallback(() => {
     const prev = previousViewRef.current;
     // Return to section (camera stays) or overview
     if (prev.kind === 'section') setView(prev);
@@ -1461,7 +1714,7 @@ export default function App() {
 
         {/* Top Bar (free mode, overview only) */}
         <AnimatePresence>
-          {isFree && view.kind !== 'workspace' && (
+          {isFree && view.kind !== 'detail' && (
             <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.2 }}
               className="fixed top-6 left-6 right-6 flex items-center justify-between pointer-events-none z-[70]">
@@ -1497,16 +1750,16 @@ export default function App() {
               exit={{ opacity: 0, x: -16 }}
               transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.4 }}
               className={`fixed z-[88] ${
-                view.kind === 'workspace'
+                view.kind === 'detail'
                   ? 'left-0 top-0 bottom-0 w-[180px] flex flex-col justify-center pl-4 pr-2'
                   : 'left-6 top-1/2 -translate-y-1/2'
               }`}>
               <TableOfContents sections={NARRATIVE_SECTIONS.filter(s => s.cardIds.length > 0)} items={items}
                 activeView={view}
-                variant={view.kind === 'workspace' ? 'flat' : 'floating'}
+                variant={view.kind === 'detail' ? 'flat' : 'floating'}
                 onSectionClick={section => openSection(section.id)}
-                onCardClick={item => openWorkspace(item.id)}
-                onOverview={() => { setView({ kind: 'overview' }); panTo(-50, -200, 0.45); }}
+                onCardClick={item => openDetail(item.id)}
+                onOverview={() => { setView({ kind: 'overview' }); panTo(50, 50, 0.31); }}
                 onCreateNew={() => setShowCreateMenu(!showCreateMenu)} />
 
               {/* Create Menu Popup */}
@@ -1532,7 +1785,7 @@ export default function App() {
 
         {/* Zoom (free mode, overview only) */}
         <AnimatePresence>
-          {isFree && view.kind !== 'workspace' && (
+          {isFree && view.kind !== 'detail' && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: EASE_OUT_QUART, delay: 0.3 }}
               className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-[70]">
@@ -1553,10 +1806,10 @@ export default function App() {
         )}
 
         {/* Infinite Desk Surface */}
-        <motion.div drag={isFree && view.kind !== 'workspace'} dragMomentum={false}
+        <motion.div drag={isFree && view.kind !== 'detail'} dragMomentum={false}
           style={{ x: springX, y: springY, scale: springZoom }}
-          className={`absolute inset-0 flex items-center justify-center ${isFree && view.kind !== 'workspace' ? 'cursor-move active:cursor-grabbing' : ''}`}>
-          <div className="relative w-[2000px] h-[1800px] flex items-center justify-center">
+          className={`absolute inset-0 flex items-center justify-center ${isFree && view.kind !== 'detail' ? 'cursor-move active:cursor-grabbing' : ''}`}>
+          <div className="relative w-[2000px] h-[2400px] flex items-center justify-center">
             <div className="absolute inset-0 opacity-5 pointer-events-none"
               style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '100px 100px' }} />
 
@@ -1600,24 +1853,36 @@ export default function App() {
             <AnimatePresence>
               {filteredItems.map((item) => {
                 const inSection = view.kind === 'section';
-                const sectionType = inSection ? SECTION_TYPE_MAP[(view as { sectionId: string }).sectionId] : null;
+                const currentSectionId = inSection ? (view as { sectionId: string }).sectionId : null;
+                const sectionType = inSection ? SECTION_TYPE_MAP[currentSectionId!] : null;
                 const isInActiveSection = inSection && item.type === sectionType;
                 const gridPos = sectionGridPositions[item.id];
+                // Event timeline items are always rendered by CanvasTimeline (carousel or strips), never as ArchiveCards
+                if (item.type === 'event' && item.timeline) return null;
                 // In section mode: dim items not in this section
                 const dimmed = !isFree
                   ? (cardSectionMap[item.id] ?? -1) < activeSectionIndex
                   : inSection && !isInActiveSection;
                 return (
                   <ArchiveCard key={item.id} item={item} isPaths={isPathsMode}
-                    onClick={() => openWorkspace(item.id)}
+                    onClick={() => openDetail(item.id)}
                     onPositionChange={handlePositionChange}
-                    isDraggable={isFree && view.kind !== 'workspace'}
+                    isDraggable={isFree && view.kind !== 'detail'}
                     isDimmed={dimmed}
                     overridePosition={gridPos}
                     isGridMode={!!gridPos} />
                 );
               })}
             </AnimatePresence>
+
+            {/* Timeline spine on canvas */}
+            <CanvasTimeline
+              items={items}
+              isVisible={isFree || (!isFree && activeSectionIndex >= 5)}
+              isInstant={isFree}
+              onEventClick={(id) => openDetail(id)}
+              mode={view.kind === 'section' && (view as any).sectionId === 'timeline' ? 'expanded' : (!isFree && activeSectionIndex === 5 ? 'expanded' : 'carousel')}
+            />
           </div>
         </motion.div>
 
@@ -1648,7 +1913,7 @@ export default function App() {
 
         {/* Status Bar (free mode) */}
         <AnimatePresence>
-          {isFree && view.kind !== 'workspace' && (
+          {isFree && view.kind !== 'detail' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.4 }}
               className="fixed bottom-6 left-8 z-[60] flex items-center gap-4 text-[10px] font-mono text-white/30">
               <div className="flex items-center gap-2"><Move size={12} /><span>Drag to navigate</span></div>
@@ -1659,23 +1924,23 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* ===== Workspace — persistent backdrop + swappable content ===== */}
+      {/* ===== Detail — persistent backdrop + swappable content ===== */}
       <AnimatePresence>
-        {workspaceItem && (
+        {detailItem && (
           <motion.div
-            key="workspace-backdrop"
+            key="detail-backdrop"
             initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.25 } }}
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             className="fixed inset-0 z-[85] bg-[#0a0a0a]"
           >
-            {workspaceItem.kind === 'document' ? (
-              <DocumentWorkspace key={workspaceItem.id} item={workspaceItem} items={items}
-                onClose={closeWorkspace}
+            {detailItem.kind === 'document' ? (
+              <DocumentDetail key={detailItem.id} item={detailItem} items={items}
+                onClose={closeDetail}
                 onUpdate={updateItem}
-                onNavigateItem={(id) => setView({ kind: 'workspace', itemId: id })} />
+                onNavigateItem={(id) => setView({ kind: 'detail', itemId: id })} />
             ) : (
-              <AssetWorkspace key={workspaceItem.id} item={workspaceItem}
-                onClose={closeWorkspace}
+              <AssetDetail key={detailItem.id} item={detailItem}
+                onClose={closeDetail}
                 onUpdate={updateItem} />
             )}
           </motion.div>

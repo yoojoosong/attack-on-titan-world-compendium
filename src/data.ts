@@ -22,6 +22,7 @@ export interface ArchiveItem {
   tags?: string[];
   position: { x: number; y: number };
   connections?: string[]; // IDs of related items
+  timeline?: { date: string; dateLabel: string; era?: string }; // For chronological ordering
   createdAt: number;
   updatedAt: number;
   createdBy: 'user' | 'ai';
@@ -184,7 +185,49 @@ Eleven opened the first gate here. The lab is the wound that Hawkins can never c
     createdBy: 'ai',
   },
 
-  // ===== Row 2 Left: Events (header at x:-680, y:350) =====
+  // ===== Events (timeline-enabled) — positioned near Chronicle section (x:120, y:350) =====
+  {
+    id: 'creel_massacre',
+    kind: 'document',
+    type: 'event',
+    title: "The Creel House Massacre",
+    content: `In 1959, the Creel family moved into their dream home in Hawkins. Within weeks, Victor Creel's wife and daughter were dead — killed by a force no one could explain.
+
+Victor was blamed. Committed to Pennhurst Asylum. But the real killer was his own son, Henry — a boy who could reach into minds.`,
+    metadata: { time: '1959', impact: 'The Origin' },
+    timeline: { date: '1959-01', dateLabel: '1959', era: 'Origin' },
+    position: { x: 20, y: 480 },
+    connections: ['vecna'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'project_mkultra',
+    kind: 'document',
+    type: 'event',
+    title: "Project MKUltra Begins",
+    content: `Dr. Martin Brenner takes Henry Creel — now designated 001 — into Hawkins National Laboratory. Under the guise of government research, Brenner begins experimenting on children with psychokinetic potential.
+
+The numbered children. The sensory deprivation tanks. The beginning of everything.`,
+    metadata: { time: '1959', impact: 'The Program' },
+    timeline: { date: '1959-06', dateLabel: '1959', era: 'Origin' },
+    position: { x: 190, y: 480 },
+    connections: ['vecna', 'brenner'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'eleven_001',
+    kind: 'document',
+    type: 'event',
+    title: "Eleven Banishes 001",
+    content: `In the rainbow room, Henry Creel revealed himself to Eleven. He massacred every other test subject. But Eleven — the youngest, the most powerful — fought back.
+
+She tore open a gate to another dimension and cast him through. Henry Creel became Vecna. The Upside Down had its master.`,
+    metadata: { time: '1979', impact: 'The Exile' },
+    timeline: { date: '1979-09', dateLabel: 'September 1979', era: 'Origin' },
+    position: { x: 360, y: 480 },
+    connections: ['eleven', 'vecna', 'brenner'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
   {
     id: 'disappearance',
     kind: 'document',
@@ -194,11 +237,66 @@ Eleven opened the first gate here. The lab is the wound that Hawkins can never c
 
 A boy vanishes. A gate opens. A girl appears. And Hawkins, Indiana is never the same again.`,
     metadata: { time: 'November 1983', impact: 'The Catalyst' },
-    position: { x: -680, y: 510 },
+    timeline: { date: '1983-11-06', dateLabel: 'November 1983', era: 'Season 1' },
+    position: { x: 20, y: 540 },
     connections: ['will', 'hawkins'],
-    createdAt: now,
-    updatedAt: now,
-    createdBy: 'ai',
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'eleven_escapes',
+    kind: 'document',
+    type: 'event',
+    title: "Eleven Escapes the Lab",
+    content: `On the same night Will vanished, a girl in a hospital gown fled Hawkins Lab into the rain. Shaved head. No name — just a number tattooed on her wrist: 011.
+
+Benny Hammond gave her food. Brenner's men gave her a death sentence. But Mike Wheeler gave her a home.`,
+    metadata: { time: 'November 1983', impact: 'The Escape' },
+    timeline: { date: '1983-11-06', dateLabel: 'November 1983', era: 'Season 1' },
+    position: { x: 190, y: 540 },
+    connections: ['eleven', 'mike'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'will_rescued',
+    kind: 'document',
+    type: 'event',
+    title: "Will Rescued from the Upside Down",
+    content: `Joyce Byers never stopped looking. With Hopper at her side, she crossed into the Upside Down through a makeshift gate and found her son — barely alive, wrapped in vines, a tendril down his throat.
+
+Meanwhile, Eleven faced the Demogorgon in Hawkins Middle School and vanished in a burst of light.`,
+    metadata: { time: 'December 1983', impact: 'The Rescue' },
+    timeline: { date: '1983-12-12', dateLabel: 'December 1983', era: 'Season 1' },
+    position: { x: 360, y: 540 },
+    connections: ['will', 'eleven', 'hopper'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'mind_flayer',
+    kind: 'document',
+    type: 'event',
+    title: "The Mind Flayer Possesses Will",
+    content: `The shadow monster — vast, spider-like, filling the sky of the Upside Down — found its way into Will Byers through the connection that was never fully severed.
+
+Will became its spy. Its vessel. Now Memories. And the Mind Flayer could see through his eyes into our world.`,
+    metadata: { time: 'October 1984', impact: 'The Possession' },
+    timeline: { date: '1984-10-29', dateLabel: 'October 1984', era: 'Season 2' },
+    position: { x: 20, y: 600 },
+    connections: ['will', 'eleven'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'gate_closed',
+    kind: 'document',
+    type: 'event',
+    title: "Eleven Closes the Gate",
+    content: `She returned. Stronger. Angrier. With a new look and a new name — Jane.
+
+Standing at the edge of the rift beneath Hawkins Lab, Eleven raised her hands and screamed. The Gate sealed shut. The tunnel network collapsed. For a while, Hawkins was safe again.`,
+    metadata: { time: 'November 1984', impact: 'The Seal' },
+    timeline: { date: '1984-11-04', dateLabel: 'November 1984', era: 'Season 2' },
+    position: { x: 190, y: 600 },
+    connections: ['eleven', 'hopper'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
   },
   {
     id: 'starcourt',
@@ -209,11 +307,10 @@ A boy vanishes. A gate opens. A girl appears. And Hawkins, Indiana is never the 
 
 The Mind Flayer assembled a flesh monster. Billy Hargrove sacrificed himself. Hopper was lost in the explosion. The mall burned. Summer ended.`,
     metadata: { time: 'July 1985', impact: 'Loss of Innocence' },
-    position: { x: -510, y: 540 },
+    timeline: { date: '1985-07-04', dateLabel: 'July 1985', era: 'Season 3' },
+    position: { x: 360, y: 600 },
     connections: ['eleven', 'hopper', 'dustin'],
-    createdAt: now,
-    updatedAt: now,
-    createdBy: 'ai',
+    createdAt: now, updatedAt: now, createdBy: 'ai',
   },
   {
     id: 'vecna_curse',
@@ -224,14 +321,41 @@ The Mind Flayer assembled a flesh monster. Billy Hargrove sacrificed himself. Ho
 
 The clock chimed. The earth cracked. And the Upside Down began to consume Hawkins from within.`,
     metadata: { time: 'March 1986', scale: 'Apocalyptic' },
-    position: { x: -600, y: 620 },
+    timeline: { date: '1986-03-21', dateLabel: 'March 1986', era: 'Season 4' },
+    position: { x: 20, y: 660 },
     connections: ['vecna', 'eleven'],
-    createdAt: now,
-    updatedAt: now,
-    createdBy: 'ai',
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'four_gates',
+    kind: 'document',
+    type: 'event',
+    title: "The Four Gates Open",
+    content: `Vecna's fourth kill tore Hawkins apart — literally. Four massive rifts cracked open across the town, connected by a miles-long fissure.
+
+The Upside Down began to bleed through. Ash fell like snow. The earthquake split Hawkins in half. There was no hiding the truth anymore.`,
+    metadata: { time: 'March 1986', impact: 'The Rupture' },
+    timeline: { date: '1986-03-22', dateLabel: 'March 1986', era: 'Season 4' },
+    position: { x: 190, y: 660 },
+    connections: ['vecna', 'eleven', 'hawkins'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
+  },
+  {
+    id: 'final_battle',
+    kind: 'document',
+    type: 'event',
+    title: "The Final Stand",
+    content: `Separated across dimensions, the Party launched a three-pronged assault on Vecna. Dustin and Eddie in the Upside Down. Nancy, Steve, and Robin at the Creel House. Eleven in the void.
+
+Max's heart stopped for a full minute. Vecna fell. But the damage was done — and Hawkins would never recover.`,
+    metadata: { time: 'March 1986', impact: 'The End' },
+    timeline: { date: '1986-03-23', dateLabel: 'March 1986', era: 'Season 4' },
+    position: { x: 360, y: 660 },
+    connections: ['eleven', 'vecna', 'dustin', 'steve'],
+    createdAt: now, updatedAt: now, createdBy: 'ai',
   },
 
-  // ===== Row 2 Center: Secrets (header at x:-100, y:350) =====
+  // ===== Secrets — positioned near Classified section (x:-580, y:350) =====
   {
     id: 'vecna',
     kind: 'document',
@@ -241,7 +365,7 @@ The clock chimed. The earth cracked. And the Upside Down began to consume Hawkin
 
 Brenner thought he could control him. Eleven banished him to the Upside Down. He became something else entirely — **the monster pulling all the strings**.`,
     metadata: { source: 'Recovered Memories', level: 'Top Secret' },
-    position: { x: -110, y: 520 },
+    position: { x: -600, y: 520 },
     connections: ['eleven', 'brenner'],
     createdAt: now,
     updatedAt: now,
@@ -256,14 +380,75 @@ Brenner thought he could control him. Eleven banished him to the Upside Down. He
 
 Dr. Martin Brenner — "Papa" — created the conditions for every disaster that followed. Science without conscience is the ruin of the soul.`,
     metadata: { source: 'Declassified Files', level: 'Classified' },
-    position: { x: 80, y: 570 },
+    position: { x: -480, y: 520 },
     connections: ['eleven', 'hopper', 'vecna'],
     createdAt: now,
     updatedAt: now,
     createdBy: 'ai',
   },
 
-  // ===== Row 2 Right: Perspectives (header at x:500, y:350) =====
+  {
+    id: 'upside_down_rules',
+    kind: 'document',
+    type: 'secret',
+    title: 'The Upside Down: Dimensional Rules',
+    content: `A parallel dimension that mirrors our world — frozen in time from the moment the first gate opened. No sun. No warmth. Just spores, vines, and decay.
+
+**Key properties:** The atmosphere is toxic. Electromagnetic interference disrupts all technology. The hive mind connects every creature within it. And it grows — slowly consuming whatever it touches on our side.`,
+    metadata: { source: 'Hawkins Lab Research', level: 'Top Secret' },
+    position: { x: -700, y: 520 },
+    connections: ['vecna', 'eleven'],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: 'ai',
+  },
+  {
+    id: 'psychic_powers',
+    kind: 'document',
+    type: 'secret',
+    title: 'Psychokinetic Abilities',
+    content: `The numbered children of Hawkins Lab each developed unique psychic abilities through sensory deprivation and trauma-induced stress responses.
+
+**Telekinesis, remote viewing, inter-dimensional contact.** Eleven's power is unique — she can open gates between dimensions. The cost: nosebleeds, exhaustion, and memories she can never unsee.`,
+    metadata: { source: 'Project MKUltra Files', level: 'Classified' },
+    position: { x: -700, y: 600 },
+    connections: ['eleven', 'brenner'],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: 'ai',
+  },
+  {
+    id: 'gate_mechanics',
+    kind: 'document',
+    type: 'secret',
+    title: 'Gate Mechanics',
+    content: `Gates between dimensions require immense psychic energy to open — and trauma to sustain. Eleven tore the first gate open in 1983 during a moment of extreme fear.
+
+**Each gate weakens the barrier further.** Vecna discovered that killing victims in a specific psychic state tears permanent rifts. Four kills, four gates — enough to crack Hawkins apart.`,
+    metadata: { source: 'Dimensional Research', level: 'Top Secret' },
+    position: { x: -480, y: 600 },
+    connections: ['eleven', 'vecna'],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: 'ai',
+  },
+  {
+    id: 'hive_mind',
+    kind: 'document',
+    type: 'secret',
+    title: 'The Hive Mind',
+    content: `Every creature in the Upside Down is connected through a single consciousness. The Demogorgons, the Demodogs, the vines — all extensions of one will.
+
+**The Mind Flayer was the shadow.** But Vecna was the mind behind the shadow. He didn't just enter the Upside Down — he shaped it, bent it to his will, and built an army from its flesh.`,
+    metadata: { source: 'Recovered Intelligence', level: 'Top Secret' },
+    position: { x: -600, y: 600 },
+    connections: ['vecna', 'will'],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: 'ai',
+  },
+
+  // ===== Row 2 Right: Perspectives (header at x:620, y:350) =====
   {
     id: 'hopper_letter',
     kind: 'document',
@@ -273,7 +458,7 @@ Dr. Martin Brenner — "Papa" — created the conditions for every disaster that
 
 A letter from a father to his adopted daughter, read too late. The most human moment in a story about monsters.`,
     metadata: { author: 'Jim Hopper', theme: 'Love & Loss' },
-    position: { x: 490, y: 520 },
+    position: { x: 710, y: 520 },
     connections: ['hopper', 'eleven'],
     createdAt: now,
     updatedAt: now,
@@ -288,7 +473,7 @@ A letter from a father to his adopted daughter, read too late. The most human mo
 
 Friendships fracture. Innocence fades. The game of D&D can't protect you from the real monsters. **The Upside Down is just childhood ending.**`,
     metadata: { theme: 'Coming of Age', author: 'The Party' },
-    position: { x: 650, y: 570 },
+    position: { x: 870, y: 570 },
     connections: ['mike', 'will'],
     createdAt: now,
     updatedAt: now,
